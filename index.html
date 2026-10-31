@@ -487,7 +487,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     <p class="note" style="margin:-4px 0 0">Change it for free any time. It's used for your nation and on the leaderboard.</p>
     <p class="note" id="set-msg"></p>
     <div class="field"><span class="lbl">Music</span>
-      <div class="radios"><label><input type="checkbox" id="set-music"> Battle music</label></div></div>
+      <div class="radios"><label><input type="checkbox" id="set-music"> Music</label></div></div>
     <div class="field"><label for="set-vol">Music volume</label><input type="range" id="set-vol" min="0" max="100" step="5"></div>
     <button type="submit" class="btn gold">Save name</button>
     <div class="field"><span class="lbl">Save code</span>
@@ -523,7 +523,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       <dt>Allies</dt><dd>Tap a nation you are at peace with and choose <b>Propose alliance</b>. Allies are combined with you: their factories and power plants power your buildings (and yours power theirs), you can build on each other's land, and you can invade anyone they border. Whenever either of you goes to war, the other joins and automatically sends <b>10%</b> of their people to help. Ending the alliance undoes all of it: buildings on each other's land are taken down.</dd>
       <dt>Difficulty</dt><dd><b>Easy</b>: rivals mostly expand, and the odd bomb is small. <b>Medium</b>: a calm start, then wars. <b>Hard</b>: constant wars and frequent bombing. <b>Extreme</b> unlocks after you win on Hard. Every game starts gentle: early on rivals pick on you less, send smaller armies, bomb you less and rest between attacks, then the pressure builds over the years (check <b>Rival pressure</b> in the Overview). Only one rival army can invade you at a time. Each level also learns from your own normal games (not quests or custom games): win a lot and it gets a little tougher, lose a lot and it eases off. This stays on your device.</dd>
       <dt>Win</dt><dd>Own 98% of the world, or defeat every rival. A nation that drops to 2% of its biggest size falls.</dd>
-      <dt>Controls</dt><dd>Drag to move, pinch or scroll to zoom. Esc or P pauses and saves. M turns the battle music on or off; it gets more intense when you're at war and when bombs come for you.</dd>
+      <dt>Controls</dt><dd>Drag to move, pinch or scroll to zoom. Esc or P pauses and saves. M turns the music on or off.</dd>
     </dl>
     <button class="btn gold" id="howto-back">Got it</button>
   </div>
@@ -1456,7 +1456,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       return false;
     });
     spawnBoom(m.type, x, y, B.blast);
-    if (def.id === LOCAL) { trigger('bombed'); musicDanger(); if (m.type === 'nuke') state.nukedAt = monthIndex(); }
+    if (def.id === LOCAL) { trigger('bombed'); if (m.type === 'nuke') state.nukedAt = monthIndex(); }
     if (att.id === LOCAL) state.firedBomb = true;
     const name = B.name.toLowerCase();
     if (intercepted) {
@@ -3314,134 +3314,36 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const stripTags = (h) => String(h).replace(/<[^>]*>/g, '');
   function toastTo(nid, msg, kind) { if (nid === LOCAL) showToast(msg, kind, false); }
 
-  /* ================= Battle music ================= */
-  // Original music made live with Web Audio (no files). D minor, 112 BPM, an 8-bar loop:
-  // calm layers in peacetime, drums, bass and a lead when you're at war, brass and hi-hats when bombs come for you.
-  const music = { ctx: null, master: null, layers: {}, step: 0, nextTime: 0, timer: null, level: -1, settings: null, noise: null, dangerUntil: 0 };
-  const BPM = 112, STEP = 60 / BPM / 4;   // one sixteenth note
-  const CHORDS = [[62, 65, 69], [58, 62, 65], [60, 65, 69], [60, 64, 67], [62, 67, 70], [62, 65, 70], [61, 64, 69], [62, 65, 69]];
-  const ROOTS = [38, 34, 41, 36, 43, 34, 33, 38];
-  const LEAD = [
-    [74, 0, 0, 69, 74, 76, 77, 0], [77, 0, 74, 0, 70, 0, 74, 0], [72, 0, 0, 69, 72, 74, 76, 0], [76, 0, 72, 0, 67, 0, 72, 0],
-    [74, 0, 0, 70, 74, 77, 79, 0], [77, 0, 74, 0, 70, 0, 77, 0], [76, 0, 73, 0, 76, 0, 81, 0], [74, 0, 0, 0, 69, 0, 74, 0],
-  ];
-  const BASS = [1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 2, 0, 1, 0];   // 1 = root, 2 = fifth
-  const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
-  // How loud each layer is at peace (0), war (1) and under attack (2).
-  const LAYER_MIX = { pad: [0.5, 0.42, 0.38], pluck: [0.5, 0.18, 0], bass: [0, 0.55, 0.65], drums: [0, 0.7, 0.9], lead: [0, 0.32, 0.38], brass: [0, 0, 0.42], hats: [0, 0.15, 0.4] };
-
+  /* ================= Music ================= */
+  // "The Tightening Grip" loops as the soundtrack everywhere in the game.
+  const TRACKS = { lobby: 'audio/thirty_seconds_out.mp3', peace: 'audio/the_tightening_grip.mp3', war: 'audio/point_of_impact.mp3' };
+  const music = { els: {}, cur: null, settings: null };
   function musicSettings() {
     if (!music.settings) music.settings = Object.assign({ on: true, vol: 0.6 }, store.get('gh.music') || {});
     return music.settings;
   }
   function saveMusicSettings() { store.set('gh.music', music.settings); syncMusicButtons(); }
+  function inGame() { return state.screen === 'game' && !needsStart() && !!nations[PLAYER]; }
+  // "Thirty Seconds Out" plays in the lobby (menus, founding your nation), "Point of Impact" while you're at war,
+  // "The Tightening Grip" otherwise.
+  function wantedTrack() { if (!inGame()) return 'lobby'; return enemiesOf(nations[PLAYER]).length ? 'war' : 'peace'; }
+  function trackEl(k) {
+    if (!music.els[k]) { const a = new Audio(TRACKS[k]); a.loop = true; music.els[k] = a; }
+    return music.els[k];
+  }
+  function stopMusic() { for (const a of Object.values(music.els)) a.pause(); }
   // Browsers only allow sound after the viewer interacts, so this runs on the first tap or key press.
   function startMusic() {
     if (!musicSettings().on) return;
-    if (!music.ctx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      try { music.ctx = new AC(); } catch (_) { return; }
-      const c = music.ctx;
-      const comp = c.createDynamicsCompressor();
-      comp.threshold.value = -16; comp.ratio.value = 4;
-      music.master = c.createGain();
-      music.master.gain.value = 0;
-      music.master.connect(comp); comp.connect(c.destination);
-      for (const k of Object.keys(LAYER_MIX)) { const g = c.createGain(); g.gain.value = 0; g.connect(music.master); music.layers[k] = g; }
-      const len = c.sampleRate;
-      music.noise = c.createBuffer(1, len, c.sampleRate);
-      const d = music.noise.getChannelData(0);
-      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-      music.nextTime = c.currentTime + 0.1;
-      music.timer = setInterval(scheduleMusic, 25);
-    }
-    if (music.ctx.state === 'suspended') music.ctx.resume().catch(() => {});
-    music.master.gain.setTargetAtTime(musicSettings().vol * 0.5, music.ctx.currentTime, 0.4);
-    music.level = -1;
+    const k = wantedTrack();
+    if (music.cur && music.cur !== k) { const o = music.els[music.cur]; o.pause(); o.currentTime = 0; }
+    music.cur = k;
+    const a = trackEl(k);
+    a.volume = musicSettings().vol;
+    if (a.paused) a.play().catch(() => {});
   }
-  function stopMusic() {
-    if (!music.ctx) return;
-    music.master.gain.setTargetAtTime(0, music.ctx.currentTime, 0.2);
-    setTimeout(() => { if (!musicSettings().on && music.ctx) music.ctx.suspend().catch(() => {}); }, 800);
-  }
-  function setMusicLevel(level) {
-    if (!music.ctx || level === music.level) return;
-    music.level = level;
-    const t = music.ctx.currentTime;
-    for (const [k, mix] of Object.entries(LAYER_MIX)) music.layers[k].gain.setTargetAtTime(mix[level], t, level > music.prevLevel ? 0.6 : 2);
-    music.prevLevel = level;
-  }
-  // 0 = peace (also menus), 1 = you're at war, 2 = bombs are coming for you or just landed on you.
-  function musicLevel() {
-    if (state.screen === 'replay') return 1;
-    if (state.screen !== 'game' || needsStart() || !nations[PLAYER]) return 0;
-    const now = performance.now();
-    if (missiles.some((m) => m.def === PLAYER) || now < music.dangerUntil) return 2;
-    return enemiesOf(nations[PLAYER]).length ? 1 : 0;
-  }
-  function musicDanger() { music.dangerUntil = performance.now() + 12000; }
-
-  function scheduleMusic() {
-    const c = music.ctx;
-    if (!c || c.state !== 'running') return;
-    setMusicLevel(musicLevel());
-    while (music.nextTime < c.currentTime + 0.15) {
-      playStep(music.step, music.nextTime);
-      music.nextTime += STEP;
-      music.step = (music.step + 1) % (16 * 8);
-    }
-  }
-  function playStep(step, t) {
-    const bar = Math.floor(step / 16), s = step % 16, L = music.layers;
-    const chord = CHORDS[bar], root = ROOTS[bar];
-    if (s === 0) for (const n of chord) pad(hz(n - 12), t, STEP * 16, L.pad);
-    if (s % 2 === 0) pluck(hz(chord[(s / 2) % 3] + (s % 8 === 6 ? 12 : 0)), t, L.pluck);
-    if (BASS[s]) bass(hz(root + (BASS[s] === 2 ? 7 : 0)), t, L.bass);
-    if (s === 0 || s === 6 || s === 8 || s === 10) kick(t, L.drums);
-    if (s === 4 || s === 12) snare(t, L.drums);
-    if (bar === 7 && s >= 12) tom(hz(45 - (s - 12) * 3), t, L.drums);
-    if (s % 2 === 0) hat(t, L.hats, s % 4 === 2 ? 0.6 : 0.35);
-    const loopNo = Math.floor(music.loops || 0);
-    if (s % 2 === 0) { const n = LEAD[bar][s / 2]; if (n) lead(hz(n), t, STEP * 2.6, L.lead); }
-    if ((s === 0 || s === 3 || s === 6) && bar % 2 === 0) for (const n of chord) brass(hz(n), t, L.brass);
-    if (step === 16 * 8 - 1) music.loops = loopNo + 1;
-  }
-  function env(g, t, peak, attack, decay) {
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(peak, t + attack);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
-  }
-  function voice(type, f, t, dur, out, peak, attack, cutoff) {
-    const c = music.ctx, o = c.createOscillator(), g = c.createGain();
-    o.type = type; o.frequency.value = f;
-    let node = o;
-    if (cutoff) { const flt = c.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = cutoff; o.connect(flt); node = flt; }
-    node.connect(g); g.connect(out);
-    env(g, t, peak, attack, dur);
-    o.start(t); o.stop(t + attack + dur + 0.05);
-    return o;
-  }
-  function pad(f, t, dur, out) { for (const det of [-7, 6]) { const o = voice('sawtooth', f, t, dur, out, 0.05, 0.8, 900); o.detune.value = det; } }
-  function pluck(f, t, out) { voice('triangle', f, t, 0.35, out, 0.12, 0.005); }
-  function bass(f, t, out) { voice('sawtooth', f, t, 0.18, out, 0.22, 0.01, 420); }
-  function lead(f, t, dur, out) { const o = voice('square', f, t, dur, out, 0.09, 0.02, 2200); o.detune.value = 4; }
-  function brass(f, t, out) { voice('sawtooth', f, t, 0.22, out, 0.07, 0.03, 1600); }
-  function kick(t, out) {
-    const c = music.ctx, o = c.createOscillator(), g = c.createGain();
-    o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
-    o.connect(g); g.connect(out); env(g, t, 0.9, 0.003, 0.28);
-    o.start(t); o.stop(t + 0.35);
-  }
-  function noiseHit(t, out, peak, dur, type, freq) {
-    const c = music.ctx, src = c.createBufferSource(), flt = c.createBiquadFilter(), g = c.createGain();
-    src.buffer = music.noise; flt.type = type; flt.frequency.value = freq;
-    src.connect(flt); flt.connect(g); g.connect(out); env(g, t, peak, 0.002, dur);
-    src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.05);
-  }
-  function snare(t, out) { noiseHit(t, out, 0.45, 0.16, 'bandpass', 1800); voice('triangle', 190, t, 0.08, out, 0.2, 0.002); }
-  function hat(t, out, peak) { noiseHit(t, out, peak * 0.25, 0.04, 'highpass', 7000); }
-  function tom(f, t, out) { const c = music.ctx, o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(f * 1.6, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.1); o.connect(g); g.connect(out); env(g, t, 0.5, 0.003, 0.25); o.start(t); o.stop(t + 0.3); }
+  // Keeps the right song playing as you move between lobby, peace and war (after the first click).
+  setInterval(() => { if (!document.hidden && music.cur) startMusic(); }, 300);
 
   function toggleMusic() {
     const st = musicSettings();
@@ -4011,16 +3913,15 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   $('set-vol').addEventListener('input', (e) => {
     musicSettings().vol = +e.target.value / 100;
     saveMusicSettings();
-    if (music.ctx && musicSettings().on) music.master.gain.setTargetAtTime(musicSettings().vol * 0.5, music.ctx.currentTime, 0.1);
+    if (music.cur) music.els[music.cur].volume = musicSettings().vol;
   });
   // Sound may only start after the viewer interacts with the page.
-  const kickoff = () => { if (musicSettings().on && (!music.ctx || music.ctx.state === 'suspended')) startMusic(); };
+  const kickoff = () => { if (musicSettings().on && !(music.cur && !music.els[music.cur].paused)) startMusic(); };
   window.addEventListener('pointerdown', kickoff);
   window.addEventListener('keydown', kickoff);
   document.addEventListener('visibilitychange', () => {
-    if (!music.ctx) return;
-    if (document.hidden) music.ctx.suspend().catch(() => {});
-    else if (musicSettings().on) music.ctx.resume().catch(() => {});
+    if (document.hidden) stopMusic();
+    else if (musicSettings().on) startMusic();
   });
   $('ctx-close').addEventListener('click', hideContext);
   $('sheet-close').addEventListener('click', closeSheet);
