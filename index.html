@@ -204,6 +204,17 @@ tr.me td { color: #a5b0fb; }
 .modal p { margin: 0; color: var(--muted); text-align: center; }
 .modal .btns { display: grid; gap: 8px; }
 
+#splash { z-index: 40; background: radial-gradient(ellipse at center, rgba(4, 10, 20, 0.75), rgba(4, 10, 20, 0.97)); }
+.splash-list { display: grid; gap: 8px; text-align: left; }
+.splash-list li {
+  list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 16px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel);
+  font: 600 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+}
+.splash-list li.done { color: var(--fg); }
+.splash-list li .st { font-size: 10px; letter-spacing: 0.1em; }
+.splash-list li.done .st { color: var(--accent); }
+#splash-start:disabled { opacity: 0.4; cursor: not-allowed; }
 #title { z-index: 30; background: radial-gradient(ellipse at center, rgba(4, 10, 20, 0.4), rgba(4, 10, 20, 0.85)); }
 .title-box { width: min(360px, 100%); display: grid; gap: 22px; text-align: center; }
 .title-box .eyebrow { font: 600 11px var(--display); letter-spacing: 0.32em; text-transform: uppercase; color: var(--accent); }
@@ -419,6 +430,21 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   </div>
 </div>
 
+<div id="splash" class="overlay">
+  <div class="title-box">
+    <div>
+      <div class="eyebrow">World conquest</div>
+      <h1>Frontlines</h1>
+    </div>
+    <ul class="splash-list" style="margin:0;padding:0" aria-live="polite">
+      <li id="sp-home"><span>Home screen</span><span class="st">Loading...</span></li>
+      <li id="sp-medals"><span>Your achievements</span><span class="st">Waiting...</span></li>
+      <li id="sp-account"><span>Your account</span><span class="st">Waiting...</span></li>
+    </ul>
+    <div class="menu"><button class="primary" id="splash-start" disabled>Loading...</button></div>
+  </div>
+</div>
+
 <div id="runs" class="overlay" hidden>
   <div class="modal glass">
     <h2>Your runs</h2>
@@ -490,6 +516,13 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       <div class="radios"><label><input type="checkbox" id="set-music"> Music</label></div></div>
     <div class="field"><label for="set-vol">Music volume</label><input type="range" id="set-vol" min="0" max="100" step="5"></div>
     <button type="submit" class="btn gold">Save name</button>
+    <div class="field"><span class="lbl">Account and cloud save</span>
+      <p class="note" style="margin:0">Your player number: <b id="acct-num">-</b>. While you're signed in with Google (a Gmail works too), everything is saved to this number automatically. If an update or a cleared browser logs you out, sign back in and your game comes back.</p>
+      <p class="note" id="acct-state" style="margin:0"></p>
+      <div class="two"><button type="button" class="btn gold" id="acct-in">Sign in with Google</button><button type="button" class="btn ghost" id="acct-sync">Save now</button></div>
+      <button type="button" class="btn ghost" id="acct-restore">Restore from cloud</button>
+      <button type="button" class="btn ghost" id="acct-out">Sign out</button>
+    </div>
     <div class="field"><span class="lbl">Save code</span>
       <p class="note" style="margin:0">Your save code holds everything: your name, runs, quests, medals, replays, custom games and settings. Copy it to move to another device or browser, or to keep a backup. Paste it on the other side and press Load.</p>
       <div class="two"><button type="button" class="btn gold" id="code-copy">Copy save code</button><button type="button" class="btn ghost" id="code-show">Show code</button></div>
@@ -514,7 +547,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     <h2>How to play</h2>
     <dl>
       <dt>Start</dt><dd>Tap any land and press <b>Found nation here</b>. 49 rival nations appear around the world.</dd>
-      <dt>Grow</dt><dd>Tap anywhere on a nation to see everything about it: people, land, buildings, bombs, wars and allies. Tap your land and hold <b>Expand</b>, or tap free land on your border and hold <b>Claim</b>. Tap a neighbour's land, choose how many of your people to send (1% to 100%), and press <b>Invade</b>: your troops sweep in as a wave and their number counts down as they fight. It's all about population: each sector costs as many troops as the people defending it, so if you send more troops than they have people, you win. A nation you invade only fights back with <b>1%</b> of its strength until it invades you back, and the same goes for you: when someone invades you, hit back to defend at full strength. Sending 100% leaves your own land empty. Every purchase costs a little more than the last one, for every nation.</dd>
+      <dt>Grow</dt><dd>Tap anywhere on a nation to see everything about it: people, land, buildings, bombs, wars and allies. Tap your land and hold <b>Expand</b>, or tap free land on your border and hold <b>Claim</b>. Tap a neighbour's land, choose how many of your people to send (1% to 100%), and press <b>Invade</b>: your troops sweep in as a wave and their number counts down as they fight. It's all about population: each sector costs as many troops as the people defending it, so if you send more troops than they have people, you win. A nation you invade doesn't automatically invade back (only sometimes does), but its people still defend, so a bigger nation just takes your troops longer to get through. Sending 100% leaves your own land empty. Every purchase costs a little more than the last one, for every nation.</dd>
       <dt>Build</dt><dd>Pick a building from the bottom bar, then tap your land to place it. Tap it later to upgrade it.
         Press <b>Build</b> (or B) to see everything: factories, power plants, farms, banks, cities, barracks, forts, bunkers, silos, radars, airbases, spy HQs, ports, research labs, hospitals and monuments. <b>Factories</b> and <b>power plants</b> power everything in their ring: anything marked <b>Needs power</b> does nothing outside one. <b>Barracks</b>, <b>forts</b> and <b>farms</b> work anywhere. A <b>City</b> is expensive but doubles your income and almost doubles the people around it.</dd>
       <dt>Bombs</dt><dd>Buy bombs at a silo: missiles at level 1, toxic bombs at level 2, nukes at level 3. Each bomb has its own range, and upgrading adds more. To fire, tap enemy land and pick a bomb that can reach. A bomb shot down by a radar or ship does no damage at all. Bombs that land leave toxic fallout that kills people and blocks land until it fades, or until you pay for a cleanup.</dd>
@@ -689,10 +722,11 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
 
   // Browser storage for saved runs. It can be unavailable (private windows etc.), so every call is guarded.
+  let onSaved = () => {};   // set by the cloud-save section below; called after every write so changes get backed up
   const store = {
     get(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (_) { return null; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } },
-    del(k) { try { localStorage.removeItem(k); } catch (_) {} },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); onSaved(k); return true; } catch (_) { return false; } },
+    del(k) { try { localStorage.removeItem(k); onSaved(k); } catch (_) {} },
   };
 
   /* ================= World grid ================= */
@@ -1234,17 +1268,12 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
      It's all about population. You send a share of your people (1–100%) as troops. They roll into the enemy's land
      as a wave, starting at the sector you picked, and each sector costs exactly as many troops as there are people
      defending it. Send more troops than they have people and you take everything; send fewer and you run out partway.
-     A nation that hasn't invaded you back only defends with 1% of its people. */
+     An invaded nation doesn't automatically invade back; some roll to retaliate (see startAttack). */
   const ATTACK_PCTS = [1, 10, 25, 50, 75, 100];
-  // A nation that gets invaded only fights back with this share of its strength until it invades its attacker back.
-  const UNPROVOKED_DEFENSE = 0.01;
   let attacks = [];
-  // Has n sent an army into other during their current war?
-  const hasHitBack = (n, other) => { const w = wars.get(warKey(n.id, other.id)); return !!(w && w.hit && w.hit[n.id]); };
   // Troops needed to take a sector = the people defending it. Nothing else counts.
   function sectorCost(att, def, i) {
-    const effort = hasHitBack(def, att) ? 1 : UNPROVOKED_DEFENSE;
-    return Math.max(10, Math.round(regions[i].population * effort));
+    return Math.max(10, Math.round(regions[i].population));
   }
   // Rough number of sectors an army of this size would take, judged from the enemy sectors near the target.
   function estimateSectors(att, def, idx, troops) {
@@ -1259,13 +1288,12 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (troops < 40) return null;
     for (const i of att.tileList) regions[i].population = Math.round(regions[i].population * (1 - pct / 100));
     hostile(att, def);
-    const w = wars.get(warKey(att.id, def.id));
-    if (w) { w.hit = w.hit || {}; w.hit[att.id] = true; }   // invading counts as fighting back from now on
     const same = attacks.find((a) => a.att === att.id && a.def === def.id);
     if (same) { same.troops += troops; same.start += troops; same.origin = idx; return same; }
-    const a = { id: nextUid++, att: att.id, def: def.id, troops, start: troops, origin: idx, taken: 0, landing: !borders(idx, att.id) };
+    // Being invaded doesn't make a rival invade back: each invasion rolls once for whether they retaliate.
+    const retal = !def.isPlayer && rnd() < lerp(0.15, 0.5, def.aggression);
+    const a = { id: nextUid++, att: att.id, def: def.id, troops, start: troops, origin: idx, taken: 0, landing: !borders(idx, att.id), retal };
     attacks.push(a);
-    if (def.isPlayer && !hasHitBack(def, att)) toastTo(def.id, `${att.name} is invading you! You only defend at 1% until you invade them back.`, 'bad');
     return a;
   }
   // Runs 4 times a game-second: every army takes as many sectors as it can afford, faster when it's much stronger.
@@ -1349,7 +1377,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       row.className = 'atk ' + (out ? 'out' : 'in');
       const pctLeft = Math.max(0, Math.round((a.troops / a.start) * 100));
       row.innerHTML = `<div class="atk-top"><span></span><b></b></div><div class="atk-bar"><i style="width:${pctLeft}%"></i></div>`;
-      row.querySelector('span').textContent = out ? `Invading ${other.name}` : `${other.name} is invading you${hasHitBack(nations[PLAYER], other) ? '' : ' · you defend at 1%'}`;
+      row.querySelector('span').textContent = out ? `Invading ${other.name}` : `${other.name} is invading you`;
       row.querySelector('b').textContent = `${Math.floor(a.troops).toLocaleString('en-US')} troops`;
       if (out) mk(row, 'ghost', 'Call back', () => endAttack(a, true));
       box.appendChild(row);
@@ -1831,20 +1859,20 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   // How much the world fears a nation: 0 while small, rising to 1 as it nears 30% of the land.
   // A feared nation gets attacked even when the attacker is weaker, so growing big draws more fire, not less.
   const threatOf = (d) => clamp((d.tiles / landCount - 0.04) / 0.26, 0, 1);
-  // A nation being invaded only defends at 1% until it invades back, so it answers right away
-  // (skipping its usual cool-down, caution and grace period) whenever it can reach the invader.
+  // Only some invaded nations answer back (rolled per invasion in startAttack). Those that do answer right away
+  // (skipping their usual cool-down, caution and grace period) whenever they can reach the invader.
   function aiHitBack(n) {
     for (const a of attacks) {
-      if (a.def !== n.id) continue;
+      if (a.def !== n.id || !a.retal) continue;
       const foe = nations[a.att];
-      if (!foe || !foe.alive || hasHitBack(n, foe) || attacks.some((x) => x.att === n.id && x.def === foe.id)) continue;
+      if (!foe || !foe.alive || attacks.some((x) => x.att === n.id && x.def === foe.id)) continue;
       const tiles = blocFront(n, foe.id);
       if (!tiles.length) continue;
       if (foe.isPlayer && playerUnderAttack(n.id)) continue;   // another rival is already invading you
       let pct = clamp(Math.round(lerp(8, 25, n.aggression) + n.skill * 10), 5, 35);
       if (foe.isPlayer) pct = Math.max(4, Math.round(pct * lerp(0.5, 1, ramp())));
       if (startAttack(n, foe, pick(tiles), pct)) {
-        if (foe.isPlayer) toast(`${n.name} is invading you back. They now defend at full strength.`, 'bad');
+        if (foe.isPlayer) toast(`${n.name} is invading you back.`, 'bad');
         return true;
       }
     }
@@ -2648,11 +2676,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         if (isAllied(PLAYER, owner.id)) return { html: `${toxicNote}<b>Your ally.</b> You share power, can build on each other's land and can invade anyone either of you borders. When either of you goes to war, the other sends 10% of their people to help. ${intel(owner)}` };
         const holds = r.population;
         const war = isAtWar(PLAYER, owner.id) ? '<b>At war.</b> ' : inTruce(PLAYER, owner.id) ? 'Ceasefire in place. Attacking breaks it. ' : 'At peace. Attacking declares war. ';
-        const fight = hasHitBack(owner, p) ? owner.pop : Math.round(owner.pop * UNPROVOKED_DEFENSE);
+        const fight = owner.pop;
         const reach = canHit ? `${invadable(r.id) ? '' : 'Your army will start from the closest sector you can reach. '}Their people: <b>${compact(owner.pop)}</b> (${compact(holds)} in this sector). Yours: <b>${compact(p.pop)}</b>. To take all of their land you need more than <b>${compact(fight)}</b> troops.` : `You can't reach ${owner.name} anywhere: you or an ally need to border them, or bring a transport or airbase close. Their people: <b>${compact(owner.pop)}</b>. Yours: <b>${compact(p.pop)}</b>.`;
-        const effort = !hasHitBack(owner, p) ? ` They only fight back at <b>1%</b> until they invade you back.` : '';
-        const mineWeak = isAtWar(PLAYER, owner.id) && !hasHitBack(p, owner) ? ` <b>You</b> only defend at 1% against them until you invade them back.` : '';
-        return { html: `${toxicNote}${war}${reach}${effort}${mineWeak} ${intel(owner)}` };
+        return { html: `${toxicNote}${war}${reach} ${intel(owner)}` };
       },
     };
     return view;
@@ -2990,6 +3016,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     $('set-msg').textContent = '';
     $('code-msg').textContent = ''; $('code-box').value = '';
     syncMusicButtons();
+    cloudRender();
     $('settings').hidden = false;
   }
   function saveName(e) {
@@ -3013,7 +3040,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
   function allSaved() {
     const data = {};
-    try { for (const k of Object.keys(localStorage)) if (k.startsWith('gh.')) data[k] = localStorage.getItem(k); } catch (_) {}
+    try { for (const k of Object.keys(localStorage)) if (k.startsWith('gh.') && k !== SYNC_KEY) data[k] = localStorage.getItem(k); } catch (_) {}
     return data;
   }
   async function makeSaveCode() {
@@ -3062,16 +3089,160 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       return;
     }
     loadArmed = false; $('code-load').textContent = 'Load save code';
+    if (!applySaved(data)) return codeMsg('This browser wouldn’t let the game save. The code may be too big for it.', true);
+    $('code-box').value = '';
+    codeMsg(`Loaded! Welcome back, ${playerName()}.`);
+    cloud.hold = false; cloudSchedule();
+  }
+  // Replaces everything saved in this browser with `data` (the key/value map from a save code or the cloud).
+  function applySaved(data) {
     try {
       for (const k of Object.keys(localStorage)) if (k.startsWith('gh.')) localStorage.removeItem(k);
-      for (const [k, v] of Object.entries(data)) if (k.startsWith('gh.') && typeof v === 'string') localStorage.setItem(k, v);
-    } catch (_) { return codeMsg('This browser wouldn’t let the game save. The code may be too big for it.', true); }
+      for (const [k, v] of Object.entries(data)) if (k.startsWith('gh.') && k !== SYNC_KEY && typeof v === 'string') localStorage.setItem(k, v);
+    } catch (_) { return false; }
     music.settings = null; syncMusicButtons();
     $('set-name').value = playerName();
     updateRunsCount();
-    $('code-box').value = '';
-    codeMsg(`Loaded! Welcome back, ${playerName()}.`);
+    cloudRender();
+    return true;
   }
+
+  /* ----- Cloud save: signed in with Google, everything is backed up to your player number automatically -----
+     Uses Firebase (Auth + Firestore), loaded only when FIREBASE_CONFIG is filled in, so the game still works offline.
+     Firestore rules must let a user touch only their own doc:  match /saves/{uid} { allow read, write: if request.auth.uid == uid; } */
+  const FIREBASE_CONFIG = null;   // paste your Firebase web app config object here to switch cloud saving on
+  const FB_CDN = 'https://www.gstatic.com/firebasejs/10.12.2/';
+  const SYNC_KEY = 'gh.sync';     // { uid, at }: the cloud save this browser last matched. Never part of a save code.
+  const SAVE_LIMIT = 900000;      // Firestore docs max out at 1 MB
+  const cloud = { fb: null, user: null, hold: false, busy: false, again: false, timer: 0, err: '', ready: null };
+
+  function playerNumber() {
+    let n = store.get('gh.pid');
+    if (!n) { n = String(Math.floor(100000000 + rnd() * 900000000)); store.set('gh.pid', n); }
+    return n;
+  }
+  const readSync = () => { try { return JSON.parse(localStorage.getItem(SYNC_KEY)) || {}; } catch (_) { return {}; } };
+  const hasProgress = () => ['gh.runs', 'gh.medals', 'gh.replays', 'gh.custom', 'gh.quests'].some((k) => { const v = store.get(k); return v && Object.keys(v).length; });
+
+  function cloudRender() {
+    $('acct-num').textContent = playerNumber();
+    const u = cloud.user, on = !!cloud.fb;
+    $('acct-in').hidden = !on || !!u;
+    $('acct-sync').hidden = $('acct-out').hidden = !u;
+    $('acct-restore').hidden = !u;
+    const el = $('acct-state');
+    el.className = 'note' + (cloud.err ? ' warn' : '');
+    el.style.margin = '0';
+    if (cloud.err) el.textContent = cloud.err;
+    else if (!on) el.textContent = FIREBASE_CONFIG ? 'Cloud saving is unavailable right now. Your game still saves on this device.' : 'Cloud saving isn’t switched on yet. Your game still saves on this device, and you can use a save code below.';
+    else if (!u) el.textContent = 'Not signed in. Sign in to back up your game to your player number.';
+    else if (cloud.hold) el.textContent = `Signed in as ${u.email || 'your Google account'}. Automatic saving is paused so it can’t overwrite your cloud save: press Restore from cloud, or Save now to replace it with this device.`;
+    else {
+      const at = readSync().at;
+      el.textContent = `Signed in as ${u.email || 'your Google account'}. Saved automatically${at ? ', last at ' + new Date(at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''}.`;
+    }
+  }
+
+  function cloudSchedule() {
+    if (!cloud.user || cloud.hold) return;
+    clearTimeout(cloud.timer);
+    cloud.timer = setTimeout(() => cloudPush(), 8000);
+  }
+  onSaved = (k) => { if (k !== SYNC_KEY) cloudSchedule(); };
+
+  async function cloudPush(force) {
+    const { user, fb } = cloud;
+    if (!user || (cloud.hold && !force)) return false;
+    if (cloud.busy) { cloud.again = true; return false; }
+    cloud.busy = true; clearTimeout(cloud.timer);
+    try {
+      const code = await makeSaveCode();
+      if (code.length > SAVE_LIMIT) throw new Error('size');
+      const at = Date.now();
+      await fb.setDoc(fb.doc(fb.db, 'saves', user.uid), { code, pid: playerNumber(), name: playerName(), savedAt: at });
+      localStorage.setItem(SYNC_KEY, JSON.stringify({ uid: user.uid, at }));
+      cloud.err = ''; cloud.hold = false;
+      return true;
+    } catch (e) {
+      cloud.err = e && e.message === 'size' ? 'Your game is too big for cloud saving. Delete some replays, or use a save code.' : 'Couldn’t reach the cloud. Will try again on your next change.';
+      return false;
+    } finally {
+      cloud.busy = false; cloudRender();
+      if (cloud.again) { cloud.again = false; cloudSchedule(); }
+    }
+  }
+
+  async function cloudFetch() {
+    const { user, fb } = cloud;
+    const snap = await fb.getDoc(fb.doc(fb.db, 'saves', user.uid));
+    return snap.exists() ? snap.data() : null;
+  }
+
+  // Runs after sign-in (and whenever the page loads already signed in): decide whether to restore, back up, or ask.
+  async function cloudReconcile() {
+    try {
+      const remote = await cloudFetch();
+      if (!remote) { cloud.hold = false; await cloudPush(); return; }
+      const mine = readSync();
+      if (mine.uid === cloud.user.uid && mine.at >= remote.savedAt) { cloud.hold = false; await cloudPush(); return; }
+      if (!hasProgress()) {
+        const data = await readSaveCode(remote.code);
+        if (applySaved(data)) { localStorage.setItem(SYNC_KEY, JSON.stringify({ uid: cloud.user.uid, at: remote.savedAt })); cloud.hold = false; cloud.err = ''; }
+        return;
+      }
+      cloud.hold = true;   // both sides have progress: never pick a winner silently
+    } catch (_) { cloud.err = 'Couldn’t read your cloud save. Check your connection and try again.'; }
+  }
+
+  async function cloudInit() {
+    if (!FIREBASE_CONFIG) { cloudRender(); return; }
+    try {
+      const [app, auth, fs] = await Promise.all([import(FB_CDN + 'firebase-app.js'), import(FB_CDN + 'firebase-auth.js'), import(FB_CDN + 'firebase-firestore.js')]);
+      const a = app.initializeApp(FIREBASE_CONFIG);
+      cloud.fb = { auth, a: auth.getAuth(a), db: fs.getFirestore(a), doc: fs.doc, getDoc: fs.getDoc, setDoc: fs.setDoc };
+    } catch (_) { cloudRender(); return; }
+    await new Promise((resolve) => {
+      cloud.fb.auth.onAuthStateChanged(cloud.fb.a, async (u) => {
+        cloud.user = u; cloud.err = '';
+        if (u) await cloudReconcile();
+        cloudRender(); resolve();
+      });
+    });
+  }
+
+  async function cloudSignIn() {
+    const { auth, a } = cloud.fb;
+    cloud.err = ''; $('acct-state').textContent = 'Opening Google…';
+    try { await auth.signInWithPopup(a, new auth.GoogleAuthProvider()); }
+    catch (e) { cloud.err = e && e.code === 'auth/popup-closed-by-user' ? '' : 'Sign-in didn’t finish. Allow pop-ups for this page and try again.'; cloudRender(); }
+  }
+  async function cloudSignOut() { try { await cloud.fb.auth.signOut(cloud.fb.a); } catch (_) {} cloud.hold = false; cloudRender(); }
+  async function cloudSaveNow() {
+    $('acct-state').textContent = 'Saving…';
+    if (await cloudPush(true)) cloudRender();
+  }
+  let restoreArmed = false;
+  async function cloudRestore() {
+    const b = $('acct-restore');
+    try {
+      const remote = await cloudFetch();
+      if (!remote) { cloud.err = 'There’s no cloud save for this account yet.'; return cloudRender(); }
+      if (!restoreArmed) {
+        restoreArmed = true; b.textContent = 'Tap again to replace this device’s save';
+        setTimeout(() => { restoreArmed = false; b.textContent = 'Restore from cloud'; }, 5000);
+        return;
+      }
+      restoreArmed = false; b.textContent = 'Restore from cloud';
+      if (applySaved(await readSaveCode(remote.code))) {
+        localStorage.setItem(SYNC_KEY, JSON.stringify({ uid: cloud.user.uid, at: remote.savedAt }));
+        cloud.hold = false; cloud.err = '';
+        codeMsg(`Restored from the cloud. Welcome back, ${playerName()}.`);
+      }
+    } catch (_) { cloud.err = 'Couldn’t restore from the cloud. Try again.'; }
+    cloudRender();
+  }
+  // Last chance to back up when the tab is hidden or closed.
+  document.addEventListener('visibilitychange', () => { if (document.hidden && cloud.timer) cloudPush(); });
 
   let wipeArmed = false;
   function wipeData() {
@@ -3080,7 +3251,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     try { Object.keys(localStorage).filter((k) => k.startsWith('gh.')).forEach((k) => localStorage.removeItem(k)); } catch (_) {}
     wipeArmed = false; b.textContent = 'Erase all saved data';
     $('set-name').value = playerName();
-    $('set-msg').className = 'note'; $('set-msg').textContent = 'All runs, replays, medals and games were erased.';
+    $('set-msg').className = 'note'; $('set-msg').textContent = 'All runs, replays, medals and games were erased.' + (cloud.user ? ' Your cloud save is untouched: press Restore from cloud to bring it back.' : '');
+    if (cloud.user) { cloud.hold = true; clearTimeout(cloud.timer); }   // don't let the empty save overwrite the cloud copy
+    cloudRender();
     updateRunsCount();
   }
 
@@ -3317,7 +3490,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   /* ================= Music ================= */
   // "The Tightening Grip" loops as the soundtrack everywhere in the game.
   const TRACKS = { lobby: 'audio/thirty_seconds_out.mp3', peace: 'audio/the_tightening_grip.mp3', war: 'audio/point_of_impact.mp3' };
-  const music = { els: {}, cur: null, settings: null };
+  const music = { els: {}, cur: null, settings: null, unlocked: false };
   function musicSettings() {
     if (!music.settings) music.settings = Object.assign({ on: true, vol: 0.6 }, store.get('gh.music') || {});
     return music.settings;
@@ -3334,7 +3507,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   function stopMusic() { for (const a of Object.values(music.els)) a.pause(); }
   // Browsers only allow sound after the viewer interacts, so this runs on the first tap or key press.
   function startMusic() {
-    if (!musicSettings().on) return;
+    if (!music.unlocked || !musicSettings().on) return;
     const k = wantedTrack();
     if (music.cur && music.cur !== k) { const o = music.els[music.cur]; o.pause(); o.currentTime = 0; }
     music.cur = k;
@@ -3956,6 +4129,10 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   $('code-copy').addEventListener('click', copySaveCode);
   $('code-show').addEventListener('click', showSaveCode);
   $('code-load').addEventListener('click', loadSaveCode);
+  $('acct-in').addEventListener('click', cloudSignIn);
+  $('acct-out').addEventListener('click', cloudSignOut);
+  $('acct-sync').addEventListener('click', cloudSaveNow);
+  $('acct-restore').addEventListener('click', cloudRestore);
   $('set-back').addEventListener('click', () => { $('settings').hidden = true; updateRunsCount(); });
   $('end-replay').addEventListener('click', () => { const id = state.runId; showTitle(); playReplay(id); });
   $('rb-play').addEventListener('click', toggleReplay);
@@ -3997,7 +4174,33 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   syncHudTop();
   syncMusicButtons();
   showTitle();
-  setTimeout(() => medal('welcome'), 1200);
+  /* ================= Splash: loads home, achievements and account, then Start begins the lobby music ================= */
+  (function splash() {
+    const row = (id, text) => { const li = $(id); li.classList.add('done'); li.querySelector('.st').textContent = text; };
+    const pending = (id) => { $(id).querySelector('.st').textContent = 'Loading...'; };
+    const tick = () => new Promise((r) => setTimeout(r, 450));
+    const cloudStarted = cloudInit();
+    const lobby = trackEl('lobby'); lobby.preload = 'auto'; try { lobby.load(); } catch (_) {}
+    (async () => {
+      await tick(); row('sp-home', 'Ready');
+      pending('sp-medals'); await tick();
+      const got = Object.keys(store.get('gh.medals') || {}).length;
+      row('sp-medals', `${got} of ${MEDALS.length}`);
+      pending('sp-account'); await tick();
+      await Promise.race([cloudStarted, new Promise((r) => setTimeout(r, 3000))]);   // a returning player's cloud save loads here
+      $('sp-medals').querySelector('.st').textContent = `${Object.keys(store.get('gh.medals') || {}).length} of ${MEDALS.length}`;
+      row('sp-account', playerName() + (cloud.user ? ' (cloud save on)' : ''));
+      await tick();
+      const b = $('splash-start'); b.disabled = false; b.textContent = 'Start'; b.focus();
+    })();
+    $('splash-start').addEventListener('click', () => {
+      $('splash').hidden = true;
+      music.unlocked = true;
+      startMusic();
+      setTimeout(() => medal('welcome'), 600);
+    });
+  })();
+
   centreOn(COLS / 2, ROWS * 0.4, minS * 1.5);
   requestAnimationFrame(frame);
 
