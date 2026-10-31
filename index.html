@@ -204,6 +204,17 @@ tr.me td { color: #a5b0fb; }
 .modal p { margin: 0; color: var(--muted); text-align: center; }
 .modal .btns { display: grid; gap: 8px; }
 
+#splash { z-index: 40; background: radial-gradient(ellipse at center, rgba(4, 10, 20, 0.75), rgba(4, 10, 20, 0.97)); }
+.splash-list { display: grid; gap: 8px; text-align: left; }
+.splash-list li {
+  list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 16px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel);
+  font: 600 12px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+}
+.splash-list li.done { color: var(--fg); }
+.splash-list li .st { font-size: 10px; letter-spacing: 0.1em; }
+.splash-list li.done .st { color: var(--accent); }
+#splash-start:disabled { opacity: 0.4; cursor: not-allowed; }
 #title { z-index: 30; background: radial-gradient(ellipse at center, rgba(4, 10, 20, 0.4), rgba(4, 10, 20, 0.85)); }
 .title-box { width: min(360px, 100%); display: grid; gap: 22px; text-align: center; }
 .title-box .eyebrow { font: 600 11px var(--display); letter-spacing: 0.32em; text-transform: uppercase; color: var(--accent); }
@@ -416,6 +427,21 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       <button id="menu-settings">Settings <svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
     </div>
     <div class="title-foot" id="title-foot">Fifty nations. One world. Take it all.</div>
+  </div>
+</div>
+
+<div id="splash" class="overlay">
+  <div class="title-box">
+    <div>
+      <div class="eyebrow">World conquest</div>
+      <h1>Frontlines</h1>
+    </div>
+    <ul class="splash-list" style="margin:0;padding:0" aria-live="polite">
+      <li id="sp-home"><span>Home screen</span><span class="st">Loading...</span></li>
+      <li id="sp-medals"><span>Your achievements</span><span class="st">Waiting...</span></li>
+      <li id="sp-account"><span>Your account</span><span class="st">Waiting...</span></li>
+    </ul>
+    <div class="menu"><button class="primary" id="splash-start" disabled>Loading...</button></div>
   </div>
 </div>
 
@@ -3317,7 +3343,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   /* ================= Music ================= */
   // "The Tightening Grip" loops as the soundtrack everywhere in the game.
   const TRACKS = { lobby: 'audio/thirty_seconds_out.mp3', peace: 'audio/the_tightening_grip.mp3', war: 'audio/point_of_impact.mp3' };
-  const music = { els: {}, cur: null, settings: null };
+  const music = { els: {}, cur: null, settings: null, unlocked: false };
   function musicSettings() {
     if (!music.settings) music.settings = Object.assign({ on: true, vol: 0.6 }, store.get('gh.music') || {});
     return music.settings;
@@ -3334,7 +3360,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   function stopMusic() { for (const a of Object.values(music.els)) a.pause(); }
   // Browsers only allow sound after the viewer interacts, so this runs on the first tap or key press.
   function startMusic() {
-    if (!musicSettings().on) return;
+    if (!music.unlocked || !musicSettings().on) return;
     const k = wantedTrack();
     if (music.cur && music.cur !== k) { const o = music.els[music.cur]; o.pause(); o.currentTime = 0; }
     music.cur = k;
@@ -3997,7 +4023,30 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   syncHudTop();
   syncMusicButtons();
   showTitle();
-  setTimeout(() => medal('welcome'), 1200);
+  /* ================= Splash: loads home, achievements and account, then Start begins the lobby music ================= */
+  (function splash() {
+    const row = (id, text) => { const li = $(id); li.classList.add('done'); li.querySelector('.st').textContent = text; };
+    const pending = (id) => { $(id).querySelector('.st').textContent = 'Loading...'; };
+    const tick = () => new Promise((r) => setTimeout(r, 450));
+    const lobby = trackEl('lobby'); lobby.preload = 'auto'; try { lobby.load(); } catch (_) {}
+    (async () => {
+      await tick(); row('sp-home', 'Ready');
+      pending('sp-medals'); await tick();
+      const got = Object.keys(store.get('gh.medals') || {}).length;
+      row('sp-medals', `${got} of ${MEDALS.length}`);
+      pending('sp-account'); await tick();
+      row('sp-account', playerName());
+      await tick();
+      const b = $('splash-start'); b.disabled = false; b.textContent = 'Start'; b.focus();
+    })();
+    $('splash-start').addEventListener('click', () => {
+      $('splash').hidden = true;
+      music.unlocked = true;
+      startMusic();
+      setTimeout(() => medal('welcome'), 600);
+    });
+  })();
+
   centreOn(COLS / 2, ROWS * 0.4, minS * 1.5);
   requestAnimationFrame(frame);
 
