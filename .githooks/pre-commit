@@ -1,0 +1,45 @@
+#!/bin/sh
+# Blocks commits that contain likely secrets/PII or use a non-noreply author email.
+# Enable once per clone:  git config core.hooksPath .githooks
+# Bypass a false positive (sparingly):  git commit --no-verify
+
+fail=0
+
+email=$(git config user.email)
+case "$email" in
+  *@users.noreply.github.com) ;;
+  *) echo "BLOCKED: git user.email is '$email', not a GitHub noreply address."; fail=1 ;;
+esac
+
+# Only added lines in staged changes.
+added=$(git diff --cached -U0 --no-color --diff-filter=ACM | grep -E '^\+[^+]' | sed 's/^+//')
+
+check() { # label, extended regex
+  hits=$(printf '%s\n' "$added" | grep -nEi -- "$2" | cut -c1-120)
+  if [ -n "$hits" ]; then
+    echo "BLOCKED: possible $1:"; echo "$hits" | sed 's/^/    /'; fail=1
+  fi
+}
+
+check "private key"          '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+check "AWS access key"       'AKIA[0-9A-Z]{16}'
+check "GitHub token"         '(ghp|gho|ghu|ghs|ghr|github_pat)_[A-Za-z0-9_]{20,}'
+check "API key/token"        '(sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,}|xox[abprs]-[A-Za-z0-9-]{10,}|sk_live_[A-Za-z0-9]+)'
+check "hard-coded credential" '(api[_-]?key|secret|token|passw(or)?d|bearer)["'"'"']?[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"' ]{8,}'
+check "local path"           '(/Users/[A-Za-z0-9._-]+/|/home/[A-Za-z0-9._-]+/|C:\\Users\\)'
+check "phone number"         '\(?[0-9]{3}\)?[-. ][0-9]{3}[-. ][0-9]{4}'
+check "private IP"           '(192\.168\.[0-9]+\.[0-9]+|10\.[0-9]+\.[0-9]+\.[0-9]+)'
+
+# Emails other than noreply addresses.
+emails=$(printf '%s\n' "$added" | grep -Eio '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' | grep -viE '@users\.noreply\.github\.com$|^noreply@')
+if [ -n "$emails" ]; then
+  echo "BLOCKED: email address(es) in staged changes:"; echo "$emails" | sort -u | sed 's/^/    /'; fail=1
+fi
+
+# Files that should never be committed.
+bad=$(git diff --cached --name-only --diff-filter=ACM | grep -E '(^|/)(\.env[^/]*|.*\.pem|.*\.p12|id_(rsa|ed25519)[^/]*|\.DS_Store)$')
+if [ -n "$bad" ]; then
+  echo "BLOCKED: sensitive/junk files staged:"; echo "$bad" | sed 's/^/    /'; fail=1
+fi
+
+[ $fail -eq 0 ] || { echo; echo "Commit aborted. Fix the above, or use --no-verify if it's a false positive."; exit 1; }
