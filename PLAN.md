@@ -32,7 +32,9 @@ Built, with these notes. Levels now start at 0 and every stat is a formula in th
   - A couple more mid-tier bombs between toxic and nuke.
 - **More news items** in the side feed ("X bombed Y", "Y's silo destroyed", and similar). Remove the low-value ones that currently clutter it.
 
-## Phase 4: Spies and fog of war
+## Phase 4: Spies and fog of war (done)
+
+Built as planned, with these notes. Hidden kinds are `HIDDEN_ORDER` (radar, bunker, silo, airbase, spy HQ, spy radar); the discovered ones live in `found` (saved). Spy ship ($6,000, needs a Spy HQ, built at a port) scans 6 sectors around it. Spy plane is sent from the enemy-land panel from any airbase within 3x its range + 20 and reveals 7 sectors around where it lands. Spy radar needs a Spy HQ at level 100 (`maxLevel('spy')`), so it is a very late unlock; its level sets how many hidden kinds it finds (one more every 7 levels) and level 50 sees stealth weapons, as does a level-50 radar. Spy bomb (silo 30) and spy warhead (silo 40) are hidden in flight and radars below level 50 can't shoot them down. The AI doesn't use spy weapons, ships or planes yet. Spy HQ perks: army +0.2% per level, city income and people +0.3% per level. Intel tiers are in `intel()` (1, 5, 10, 25, 50); at 10 an HQ also reveals hidden buildings in its range, and at 50 every hidden building of the tapped nation. Stats and two medals (Eyes Open, Spymaster) cover the spy agency; no quest yet. All numbers are first guesses and only checked by script, not by play.
 - **Hidden buildings.** Enemy AI buildings are hidden by default. Factories, cities and ports stay visible. Radar, silo, bunker, spy HQ and airbase are hidden until found. Allies' buildings are always visible.
 - **Finding hidden buildings:** a spy ship, and the spy radar. The spy ship needs a Spy HQ and a Port together, is very expensive, and auto-scans the area it sails through.
 - **Spy radar.** Unlocked once a Spy HQ is at max level. Each spy radar level detects more kinds of hidden things. Its top level also detects spy weapons in flight.

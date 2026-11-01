@@ -657,9 +657,21 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   // The next level that changes something big, shown in the building panel.
   const MILESTONES = {
     factory: [[10, '+25% income'], [25, '+25% income'], [50, '+25% income'], [100, '+25% income']],
-    silo: [[2, 'toxic bombs'], [4, 'firestorm bombs'], [6, 'dirty bombs'], [8, 'nukes'], [15, 'MIRV warheads']],
-    radar: [[10, 'stronger shots'], [25, 'stronger shots']],
+    silo: [[2, 'toxic bombs'], [4, 'firestorm bombs'], [6, 'dirty bombs'], [8, 'nukes'], [15, 'MIRV warheads'], [30, 'spy bombs'], [40, 'spy warheads']],
+    radar: [[10, 'stronger shots'], [25, 'stronger shots'], [50, 'sees stealth weapons']],
+    sradar: [[7, 'finds bunkers'], [14, 'finds silos'], [21, 'finds airbases'], [28, 'finds spy HQs'], [35, 'finds spy radars'], [50, 'sees stealth weapons']],
+    spy: [[1, 'intel: exact numbers'], [5, 'intel: building counts'], [10, 'intel: hidden buildings and wars'], [25, 'intel: strike plans'], [50, 'intel: full map'], [100, 'unlocks spy radars']],
   };
+  // Fog of war: rivals' buildings of these kinds stay hidden until found (a spy ship, spy plane, spy radar or Spy HQ intel).
+  // Spy radar level N detects the first 1 + N/7 kinds in this order; factories, cities and the rest are always visible.
+  const HIDDEN_ORDER = ['radar', 'bunker', 'silo', 'airbase', 'spy', 'sradar'];
+  const SRADAR_R = (l) => 30 + l;
+  const SRADAR_KINDS = (l) => Math.min(HIDDEN_ORDER.length, 1 + Math.floor(l / 7));
+  const STEALTH_SEE = 50;             // a radar or spy radar at this level sees stealth weapons in flight
+  const SPY_ATK = (l) => 0.002 * (l + 1);         // Spy HQ: stronger armies
+  const SPY_CITY = (l) => 0.003 * (l + 1);        // Spy HQ: richer cities
+  const PLANE_R = 7;                  // a spy plane reveals this far around where it lands
+  const SHIP_SCAN_R = 6;
   const nextMilestone = (t, l) => (MILESTONES[t] || []).find((m) => m[0] > l);
   const BUILD = {
     factory:  { name: 'Factory',      cost: 400, tech: 100, cat: 'eco', radius: FACTORY_RANGE, ring: '226,181,75', info: (l) => `+${money(FACTORY_INCOME(l))} a month · powers buildings within ${FACTORY_RANGE(l)} sectors` },
@@ -674,7 +686,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     fort:     { name: 'Fort',         cost: 700,  tech: 100, free: true, cat: 'mil', radius: FORT_R, ring: '236,90,80', info: (l) => `Covers ${FORT_R(l)} sectors · fights are decided by population only, so forts don't change battles right now` },
     bunker:   { name: 'Bunker',       cost: 1100, tech: 115, cat: 'mil', radius: BUNKER_R, ring: '148,163,184', info: (l) => `Bombs kill ${Math.round(BUNKER_SHIELD(l) * 100)}% fewer people within ${BUNKER_R(l)} sectors and can't flatten land there` },
     airbase:  { name: 'Airbase',      cost: 1600, tech: 120, cat: 'mil', radius: AIR_R, ring: '125,211,252', info: (l) => `Claim or invade any land within ${AIR_R(l)} sectors, even across the sea` },
-    spy:      { name: 'Spy HQ',       cost: 1400, tech: 115, cat: 'mil', radius: SPY_R, ring: '196,181,253', info: (l) => `Level ${l} · every nation's full info is now shown when you tap their land, so a spy HQ doesn't add anything right now` },
+    spy:      { name: 'Spy HQ',       cost: 1400, tech: 115, cat: 'mil', radius: SPY_R, ring: '196,181,253', info: (l) => `Your army +${(SPY_ATK(l) * 100).toFixed(1)}% stronger · cities +${(SPY_CITY(l) * 100).toFixed(1)}% income and people · tap a rival for more intel the higher this goes (range ${SPY_R(l)})` },
+    sradar:   { name: 'Spy Radar',    cost: 6000, tech: 130, cat: 'mil', radius: SRADAR_R, ring: '196,181,253', need: 'spymax', info: (l) => `Finds hidden ${HIDDEN_ORDER.slice(0, SRADAR_KINDS(l)).join(', ')} within ${SRADAR_R(l)} sectors${l >= STEALTH_SEE ? ' · sees stealth weapons in flight' : ''}` },
     lab:      { name: 'Research Lab', cost: 1200, tech: 100, cat: 'other', info: (l) => `+${LAB_RATE(l)} tech a month on top of normal research` },
     hospital: { name: 'Hospital',     cost: 1000, tech: 105, cat: 'other', radius: HEAL_R, ring: '248,113,113', info: (l) => `People grow faster and toxic fallout kills half as many within ${HEAL_R(l)} sectors · plagues hit your nation half as hard` },
     monument: { name: 'Monument',     cost: 8000, tech: 130, step: 1, free: true, cat: 'other', info: (l) => `+${Math.round(MON_BONUS(l) * 100)}% chance nations accept your alliances and ceasefires · +${money(MON_INC(l))} a month` },
@@ -683,6 +696,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const SHIPS = {
     scout:     { name: 'Scout ship', cost: 500, range: 6, chance: 0.5, info: 'Small radar: spots incoming bombs and shoots some down.' },
     transport: { name: 'Transport',  cost: 700, range: 0, chance: 0,   info: 'Carries troops: park it next to any coast to claim or invade there.' },
+    spy:       { name: 'Spy ship',   cost: 6000, range: 0, chance: 0,  info: 'Sails unseen and finds hidden rival buildings anywhere it passes. Needs a Spy HQ.' },
   };
   const SHIP_SPEED = 3;   // sectors per second
   // `look` is the blast and flight style it borrows from the three hand-drawn bombs.
@@ -692,11 +706,13 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     firestorm: { name: 'Firestorm',  cost: 1600,  range: 62, siloLevel: 4,  blast: 3.0, kill: 0.7,  flatten: 1.7, toxR: 1.6, toxM: 6,  look: 'missile' },
     dirty:     { name: 'Dirty bomb', cost: 2100,  range: 75, siloLevel: 6,  blast: 3.4, kill: 0.5,  flatten: 0.6, toxR: 5.2, toxM: 34, look: 'toxic' },
     nuke:      { name: 'Nuke',       cost: 3000,  range: 90, siloLevel: 8,  blast: 4.2, kill: 0.9,  flatten: 2.6, toxR: 4.2, toxM: 28, look: 'nuke' },
+    spymissile: { name: 'Spy bomb',  cost: 9000,  range: 40, siloLevel: 30, blast: 1.6, kill: 0.6,  flatten: 1.0, toxR: 1.2, toxM: 4,  look: 'missile', stealth: true },
     mirv:      { name: 'MIRV',       cost: 14000, range: 110, siloLevel: 15, blast: 4.2, kill: 0.9,  flatten: 2.6, toxR: 4.2, toxM: 28, look: 'nuke', mirv: 'nuke', info: 'splits into nukes over the target' },
+    spymirv:   { name: 'Spy warhead', cost: 45000, range: 110, siloLevel: 40, blast: 4.2, kill: 0.9, flatten: 2.6, toxR: 4.2, toxM: 28, look: 'nuke', mirv: 'nuke', stealth: true },
   };
   const BOMB_TYPES = Object.keys(BOMBS);
   // 0 = plain, 1 = off on Easy (toxic bombs and up), 2 = also held back until nukes are allowed (nuke and up)
-  const BOMB_TIER = { missile: 0, toxic: 1, firestorm: 1, dirty: 1, nuke: 2, mirv: 2 };
+  const BOMB_TIER = { missile: 0, toxic: 1, firestorm: 1, dirty: 1, nuke: 2, mirv: 2, spymissile: 0, spymirv: 2 };
   const ICONS = {
     factory: 'M3 21V10l6 4V10l6 4V5h4v16zM3 21h18',
     barracks: 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z',
@@ -710,6 +726,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     fort: 'M4 21V9h3V6h2v3h2V6h2v3h2V6h2v3h3v12zM10 21v-5h4v5',
     bunker: 'M3 19h18M5 19a7 7 0 0 1 14 0M9 15h6',
     airbase: 'M21 12L3 5l3 7-3 7zM6 12h9',
+    sradar: 'M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12zM12 10a2 2 0 1 0 0.01 0M5 20a9 9 0 0 1 14 0',
     spy: 'M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12zM12 10a2 2 0 1 0 0.01 0',
     lab: 'M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3M7.5 15h9',
     hospital: 'M4 4h16v16H4zM12 8v8M8 12h8',
@@ -942,13 +959,13 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       style: profile ? profile.style : 'You', skill: profile ? profile.skill : 1, aggression: profile ? profile.aggression : 0,
       alive: true, buys: {}, gold: START_GOLD, tech: 100, peak: 0, lastHitBy: null, milestone: 0,
       tiles: 0, cleanTiles: 0, pop: 0, income: 0, frontier: [], enemyFront: [], tileList: [], blds: [],
-      barracks: 0, factoryInc: 0, cities: 0, bankPct: 0, labRate: 0, techAcc: 0, monLevel: 0, hospitals: 0, health: 1, team: 0, path: null, sx: 0, sy: 0, c0: 0, c1: 0, r0: 0, r1: 0,
+      barracks: 0, factoryInc: 0, cities: 0, bankPct: 0, labRate: 0, techAcc: 0, monLevel: 0, spyLevel: 0, seesStealth: false, hospitals: 0, health: 1, team: 0, path: null, sx: 0, sy: 0, c0: 0, c1: 0, r0: 0, r1: 0,
     };
   }
 
   function resetWorld() {
     for (const r of regions) { r.owner = null; r.population = 0; r.toxic = 0; r.building = null; }
-    buildings = []; ships = []; missiles = []; warheads = []; booms = []; fx = [];
+    buildings = []; ships = []; missiles = []; warheads = []; planes = []; found = new Set(); spyScans = 0; spyFound = 0; booms = []; fx = [];
     wars.clear(); truces.clear(); alliances.clear(); attacks = []; attackSig = ''; if ($('attacks')) { $('attacks').hidden = true; $('attacks').innerHTML = ''; }
     gameClock = 0; nextUid = 1;
     territoryDirty = true; toxicDirty = true;
@@ -1017,7 +1034,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   function tally() {
     for (const n of Object.values(nations)) {
       n.tiles = 0; n.cleanTiles = 0; n.pop = 0; n.frontier.length = 0; n.enemyFront.length = 0; n.tileList.length = 0; n.blds.length = 0;
-      n.sx = 0; n.sy = 0; n.c0 = COLS; n.c1 = 0; n.r0 = ROWS; n.r1 = 0; n.barracks = 0; n.factoryInc = 0; n.cities = 0; n.bankPct = 0; n.labRate = 0; n.monLevel = 0; n.hospitals = 0;
+      n.sx = 0; n.sy = 0; n.c0 = COLS; n.c1 = 0; n.r0 = ROWS; n.r1 = 0; n.barracks = 0; n.factoryInc = 0; n.cities = 0; n.bankPct = 0; n.labRate = 0; n.monLevel = 0; n.hospitals = 0; n.spyLevel = 0; n.seesStealth = false;
     }
     for (let i = 0; i < N; i++) {
       const r = regions[i];
@@ -1055,8 +1072,11 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       if (b.type === 'barracks') n.barracks += (b.level + 1) * 0.05;
       if (b.type === 'factory') n.factoryInc += FACTORY_INCOME(b.level);
       if (b.on) {
+        if (b.type === 'radar' && b.level >= STEALTH_SEE) n.seesStealth = true;
         if (b.type === 'bank') n.bankPct = Math.min(1, n.bankPct + BANK_PCT(b.level));
         else if (b.type === 'lab') n.labRate += LAB_RATE(b.level);
+        else if (b.type === 'spy') n.spyLevel = Math.max(n.spyLevel, b.level + 1);
+        else if (b.type === 'sradar' && b.owner === PLAYER) { revealNear(regions[b.idx].col + 0.5, regions[b.idx].row + 0.5, SRADAR_R(b.level), SRADAR_KINDS(b.level)); if (b.level >= STEALTH_SEE) n.seesStealth = true; }
         else if (b.type === 'monument') n.monLevel = Math.max(n.monLevel, b.level + 1);
         else if (b.type === 'hospital') { n.hospitals++; paint(healCover, b, HEAL_R(b.level)); }
         else if (b.type === 'fort') paint(fortCover, b, FORT_R(b.level));
@@ -1114,12 +1134,32 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const reachable = (idx) => borders(idx, PLAYER)
     || buildings.some((b) => b.owner === PLAYER && b.type === 'airbase' && b.on && tileDist(b.idx, idx) <= AIR_R(b.level))
     || ships.some((s) => s.owner === PLAYER && s.kind === 'transport' && Math.hypot(s.x - (regions[idx].col + 0.5), s.y - (regions[idx].row + 0.5)) <= 1.8);
+  // Fog of war. `found` holds the uids of rival buildings you have discovered.
+  let found = new Set(), planes = [], spyScans = 0, spyFound = 0;
+  const hiddenFrom = (b) => !!b && b.owner !== PLAYER && HIDDEN_ORDER.includes(b.type) && !found.has(b.uid) && !onSide(b.owner, PLAYER);
+  const seenBuilding = (r) => (r.building && !hiddenFrom(r.building) ? r.building : null);
+  // Marks hidden rival buildings of the first `kinds` hidden types within R of (x, y) as found. Returns how many were new.
+  function revealNear(x, y, R, kinds = HIDDEN_ORDER.length) {
+    let n = 0;
+    for (const b of buildings) {
+      if (!hiddenFrom(b) || HIDDEN_ORDER.indexOf(b.type) >= kinds) continue;
+      const r = regions[b.idx];
+      if (Math.hypot(r.col + 0.5 - x, r.row + 0.5 - y) <= R) { found.add(b.uid); n++; }
+    }
+    if (n) { spyFound += n; for (let i = 0; i < n; i++) bumpStat('spyFound'); sfxPlay('build', 0.5); }
+    return n;
+  }
+  // Your best Spy HQ's level, or -1 without one.
+  const spyHQLevel = (n) => n.blds.reduce((m, b) => (b.type === 'spy' && b.on ? Math.max(m, b.level) : m), -1);
+  const spyMax = () => buildings.some((b) => b.owner === PLAYER && b.type === 'spy' && b.level >= maxLevel('spy'));
+  const spyAtk = (n) => (n.spyLevel > 0 ? SPY_ATK(n.spyLevel - 1) : 0);
+  const spyCity = (n) => (n.spyLevel > 0 ? SPY_CITY(n.spyLevel - 1) : 0);
   const monBonus = (n) => (n.monLevel ? MON_BONUS(n.monLevel - 1) : 0);   // monLevel is the best monument's level + 1, 0 for none
   const power = (n) => n.tech * (1 + n.barracks);
   // Win chance for one particular sector: forts covering it make the defender stronger.
   const winChanceAt = (att, def) => winChance(att, def);
   // Who wins is all about population.
-  const winChance = (att, def) => { const a = att.pop, d = def.pop; return a + d ? a / (a + d) : 0.5; };
+  const winChance = (att, def) => { const a = att.pop * (1 + spyAtk(att)), d = def.pop; return a + d ? a / (a + d) : 0.5; };
   // Escalating prices: each purchase raises the price of the next one of that kind.
   // The same rules apply to every nation, AI included.
   const price = (n, key, base, step) => Math.round(base * (1 + step * (n.buys[key] || 0)));
@@ -1317,7 +1357,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   let attacks = [];
   // Troops needed to take a sector = the people defending it. Nothing else counts.
   function sectorCost(att, def, i) {
-    return Math.max(10, Math.round(regions[i].population));
+    return Math.max(10, Math.round(regions[i].population / (1 + spyAtk(att))));
   }
   // Rough number of sectors an army of this size would take, judged from the enemy sectors near the target.
   function estimateSectors(att, def, idx, troops) {
@@ -1440,8 +1480,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
 
   /* ----- Bombs ----- */
-  const bombPhrase = (t) => (t === 'mirv' ? 'a MIRV' : t === 'toxic' ? 'a toxic bomb' : t === 'dirty' ? 'a dirty bomb' : t === 'firestorm' ? 'a firestorm bomb' : t === 'nuke' ? 'a nuke' : 'a missile');
-  const bigBomb = (t) => t === 'nuke' || t === 'mirv';
+  const bombPhrase = (t) => (t === 'mirv' ? 'a MIRV' : t === 'spymirv' ? 'a spy warhead' : t === 'spymissile' ? 'a spy bomb' : t === 'toxic' ? 'a toxic bomb' : t === 'dirty' ? 'a dirty bomb' : t === 'firestorm' ? 'a firestorm bomb' : t === 'nuke' ? 'a nuke' : 'a missile');
+  const bigBomb = (t) => t === 'nuke' || t === 'mirv' || t === 'spymirv';
   // Each bomb has its own range; every silo level adds 30% to it.
   const bombRange = (b, type) => Math.round(BOMBS[type].range * SILO_RANGE(b.level));
   const siloReach = (b, idx, type) => tileDist(b.idx, idx) <= bombRange(b, type);
@@ -1459,7 +1499,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (BOMBS[type].mirv) mis.count = mirvCount(def);
     missiles.push(mis);
     if (att.id === LOCAL) medal('first_bomb');
-    news('bomb', `${tag(att)} launched ${bombPhrase(type)} at ${tag(def)}${BOMBS[type].mirv ? `: ${mis.count} warhead${mis.count > 1 ? 's' : ''}` : ''}.`, bigBomb(type) || att.isPlayer || def.isPlayer);
+    if (!BOMBS[type].stealth) news('bomb', `${tag(att)} launched ${bombPhrase(type)} at ${tag(def)}${BOMBS[type].mirv ? `: ${mis.count} warhead${mis.count > 1 ? 's' : ''}` : ''}.`, bigBomb(type) || att.isPlayer || def.isPlayer);
     return true;
   }
   function missilePos(m, t) {
@@ -1472,9 +1512,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (const b of buildings) {
       if (b.owner !== nid || b.type !== 'radar' || !b.on) continue;
       const r = regions[b.idx];
-      out.push({ uid: b.uid, x: r.col + 0.5, y: r.row + 0.5, range: RADAR_RANGE(b.level), chance: RADAR_CHANCE(b.level) });
+      out.push({ uid: b.uid, x: r.col + 0.5, y: r.row + 0.5, range: RADAR_RANGE(b.level), chance: RADAR_CHANCE(b.level), stealth: b.level >= STEALTH_SEE });
     }
-    for (const s of ships) if (s.owner === nid && s.kind !== 'transport') out.push({ uid: s.uid, x: s.x, y: s.y, range: SHIPS.scout.range, chance: SHIPS.scout.chance });
+    for (const s of ships) if (s.owner === nid && s.kind === 'scout') out.push({ uid: s.uid, x: s.x, y: s.y, range: SHIPS.scout.range, chance: SHIPS.scout.chance });
     return out;
   }
   function updateMissiles() {
@@ -1484,8 +1524,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       if (t < 0.12) continue;
       const [x, y] = missilePos(m, t);
       for (const d of defensesOf(m.def)) {
+        if (BOMBS[m.type].stealth && !d.stealth) continue;
         const dist = Math.hypot(x - d.x, y - d.y);
-        if (nations[m.def] && nations[m.def].isPlayer && !m.detected && dist <= d.range * 1.6) {
+        if (nations[m.def] && nations[m.def].isPlayer && !m.detected && dist <= d.range * 1.6 && (!BOMBS[m.type].stealth || d.stealth)) {
           m.detected = true;
           toastTo(m.def, `Incoming ${BOMBS[m.type].name.toLowerCase()} from ${nations[m.att].name}!`, 'bad');
         }
@@ -1501,6 +1542,28 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       warheads = warheads.filter((x) => x !== w);
       detonate(w.m, w.x, w.y, false, w.group);
     }
+    for (const pl of planes.slice()) {
+      if (gameClock < pl.at) continue;
+      planes = planes.filter((x) => x !== pl);
+      const n = revealNear(pl.x, pl.y, PLANE_R);
+      spyScans++; bumpStat('spyScans'); medal('spy_scan');
+      pulses.push({ idx: pl.idx, t0: gameClock });
+      toast(n ? `Spy plane landed: ${n} hidden building${n > 1 ? 's' : ''} found.` : 'Spy plane landed: nothing hidden nearby.', n ? 'good' : 'info');
+      afterChange();
+    }
+  }
+  const PLANE_COST = 3500;
+  const planeCost = (n) => price(n, 'plane', PLANE_COST, 0.2);
+  const planeBase = (idx) => buildings.filter((b) => b.owner === PLAYER && b.type === 'airbase' && b.on && tileDist(b.idx, idx) <= 3 * AIR_R(b.level) + 20);
+  function sendSpyPlane(idx) {
+    const p = nations[PLAYER], from = planeBase(idx)[0];
+    if (!from) return fail('No airbase in range.');
+    if (p.gold < planeCost(p)) return fail('Not enough money.');
+    p.gold -= planeCost(p); bump(p, 'plane');
+    const r = regions[idx], d = tileDist(from.idx, idx);
+    planes.push({ x: r.col + 0.5, y: r.row + 0.5, idx, at: gameClock + 1500 + d * 40 });
+    toast('Spy plane sent. It lands unseen.', 'info');
+    afterChange();
   }
   // "Y's silo destroyed": one line per owner and kind of building, only when it matters to you or is a silo.
   function reportLost(list, att) {
@@ -1864,7 +1927,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         if (r.owner) r.population = Math.round(r.population * (healCover[r.id] ? 0.94 : 0.88));
         if (r.toxic === 0) toxicDirty = true;
       } else if (r.owner) {
-        const cap = POP_CAP * (cityBoost[r.id] ? 2 : 1) * (farmCover[r.id] ? 1.3 : 1);
+        const cap = POP_CAP * (cityBoost[r.id] ? 2 * (1 + (r.owner ? spyCity(nations[r.owner]) : 0)) : 1) * (farmCover[r.id] ? 1.3 : 1);
         const rate = (cityBoost[r.id] ? 1.06 : 1.02) + (healCover[r.id] ? 0.01 : 0);
         r.population = Math.min(cap, Math.round(r.population * rate + (cityBoost[r.id] ? 40 : 15)));
       }
@@ -1873,7 +1936,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (const n of aliveNations()) {
       // Bigger countries earn less per sector, so no one snowballs out of reach.
       const base = (n.cleanTiles * 6 + n.pop / 200) / (1 + n.tiles / 500) * (n.tech / 100);
-      n.income = Math.round(base * (1 + n.cities) * (1 + n.bankPct) + n.factoryInc + (n.monLevel ? MON_INC(n.monLevel - 1) : 0));   // every working city adds another 100%; banks add a share
+      n.income = Math.round(base * (1 + n.cities * (1 + spyCity(n))) * (1 + n.bankPct) + n.factoryInc + (n.monLevel ? MON_INC(n.monLevel - 1) : 0));   // every working city adds another 100%; banks add a share
       n.gold += n.income;
       if (n.isPlayer && n.income > 0) sfxPlay('coin');
     }
@@ -2236,6 +2299,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     { id: 'ally3',       name: 'Diplomat',         desc: 'Have 3 allies at once.' },
     { id: 'peacemaker',  name: 'Peacemaker',       desc: 'Get a ceasefire accepted.' },
     { id: 'admiral',     name: 'Admiral',          desc: 'Have 5 ships at sea.' },
+    { id: 'spy_scan',    group: 'first', name: 'Eyes Open',        desc: 'Complete your first spy scan with a spy plane or spy ship.' },
+    { id: 'spy25',       name: 'Spymaster',        desc: 'Find 25 hidden buildings (across all games).' },
     { id: 'shield10',    name: 'Iron Dome',        desc: 'Shoot down 10 bombs (across all games).' },
     { id: 'survivor',    name: 'Survivor',         desc: 'Still be standing a year after a nuke hits you.' },
     { id: 'clean',       name: 'Cleanup Crew',     desc: 'Clean up toxic land.' },
@@ -2283,6 +2348,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     st[k] = (st[k] || 0) + 1;
     store.set('gh.stats', st);
     if (k === 'shotDown' && st[k] >= 10) medal('shield10');
+    if (k === 'spyFound' && st[k] >= 25) medal('spy25');
   }
   // Custom messages from a custom game, shown as notifications when their moment happens.
   const fired = new Set();
@@ -2563,7 +2629,11 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
   function updateShips(dt) {
     for (const s of ships) {
-      if (!s.path.length) continue;
+      if (s.kind === 'spy' && s.owner === PLAYER) {
+        if (revealNear(s.x, s.y, SHIP_SCAN_R)) afterChange();
+        if (s.path.length === 1 && !s.legDone) s.legDone = true;
+      }
+      if (!s.path.length) { if (s.legDone) { s.legDone = false; spyScans++; bumpStat('spyScans'); medal('spy_scan'); } continue; }
       if (regions[s.path[0]].toxic) {   // fallout appeared ahead: steer around it
         const here = Math.floor(s.y) * COLS + Math.floor(s.x);
         s.path = findSeaPath(here, s.dest) || [];
@@ -2603,6 +2673,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (r.building) return fail('Something is already built there.');
     if (r.toxic) return fail("You can't build on toxic land.");
     if (B.coastal && !r.coastal) return fail('Ports have to be on the coast.');
+    if (B.need === 'spymax' && !spyMax()) return fail('Spy radars need a Spy HQ at its top level.');
     if (p.gold < buildCost(p, type)) return fail('Not enough money.');
     p.gold -= buildCost(p, type); bump(p, 'b:' + type);
     const b = placeBuilding(p, type, idx);
@@ -2743,7 +2814,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
 
   function tileView(r) {
-    const p = nations[PLAYER], owner = r.owner ? nations[r.owner] : null, b = r.building;
+    const p = nations[PLAYER], owner = r.owner ? nations[r.owner] : null, b = seenBuilding(r);
     const mode = needsStart() ? (r.isLand ? 'start' : 'sea') : !r.isLand ? 'sea' : r.owner === PLAYER ? 'own' : !r.owner ? 'neutral' : 'enemy';
     if (mode === 'sea' && !r.toxic) return null;
     const toxicNote = r.toxic ? `<b>Toxic fallout</b> for ${r.toxic} more month${r.toxic > 1 ? 's' : ''}. ` : '';
@@ -2782,7 +2853,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
             const troops = () => Math.floor(p.pop * state.attackPct / 100);
             const odds = document.createElement('div'); odds.className = 'troops';
             live(est, () => `${troops().toLocaleString('en-US')} troops · ${Math.round(survivalChance(p, owner, r.id, troops()) * 100)}% chance to win`);
-            live(odds, () => `You ${Math.round(p.pop).toLocaleString('en-US')} people · ${owner.name} ${Math.round(owner.pop).toLocaleString('en-US')}`);
+            live(odds, () => `You ${Math.round(p.pop).toLocaleString('en-US')} people · ${owner.name} ${seePop(owner.pop)}`);
             for (const pc of ATTACK_PCTS) {
               const b = document.createElement('button');
               b.type = 'button';
@@ -2809,6 +2880,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
             if (!stocked()) continue;
             mk(strikes, t === 'toxic' ? 'toxic' : 'missile', () => ready() ? `Fire ${BOMBS[t].name.toLowerCase()} · ${ready()} in range` : `${BOMBS[t].name} · out of range`, () => playerStrike(t, r.id), { disabled: () => !ready() });
           }
+          if (p.blds.some((x) => x.type === 'airbase')) mk(strikes, 'ghost', () => planeBase(r.id).length ? `Spy plane · ${money(planeCost(p))}` : 'Spy plane · out of range', () => sendSpyPlane(r.id), { disabled: () => !planeBase(r.id).length || p.gold < planeCost(p) });
           if (strikes.children.length) box.appendChild(strikes);
           if (isAtWar(PLAYER, owner.id)) mk(box, 'ghost', 'Offer ceasefire', () => offerCeasefire(owner));
           else mk(box, 'ghost', 'Propose alliance', () => proposeAlliance(owner));
@@ -2823,28 +2895,67 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
           if (r.toxic) return { html: `${toxicNote}You can't claim it until it's clean.`, warn: true };
           return onBorder ? { html: 'Within reach. Hold to keep claiming.' } : { html: 'Out of reach. Expand toward it, or park a transport next to it.', warn: true };
         }
-        if (isAllied(PLAYER, owner.id)) return { html: `${toxicNote}<b>Your ally.</b> You share power, can build on each other's land and can invade anyone either of you borders. When either of you goes to war, the other sends 10% of their people to help. ${intel(owner)}` };
+        if (isAllied(PLAYER, owner.id)) return { html: `${toxicNote}<b>Your ally.</b> You share power, can build on each other's land and can invade anyone either of you borders. When either of you goes to war, the other sends 10% of their people to help. ${intel(owner, true)}` };
         const holds = r.population;
         const war = isAtWar(PLAYER, owner.id) ? '<b>At war.</b> ' : inTruce(PLAYER, owner.id) ? 'Ceasefire in place. Attacking breaks it. ' : 'At peace. Attacking declares war. ';
         const fight = owner.pop;
-        const reach = canHit ? `${invadable(r.id) ? '' : 'Your army will start from the closest sector you can reach. '}Their people: <b>${compact(owner.pop)}</b> (${compact(holds)} in this sector). Yours: <b>${compact(p.pop)}</b>. To take all of their land you need more than <b>${compact(fight)}</b> troops.` : `You can't reach ${owner.name} anywhere: you or an ally need to border them, or bring a transport or airbase close. Their people: <b>${compact(owner.pop)}</b>. Yours: <b>${compact(p.pop)}</b>.`;
+        const reach = canHit ? `${invadable(r.id) ? '' : 'Your army will start from the closest sector you can reach. '}Their people: <b>${seePop(owner.pop)}</b> (${seePop(holds)} in this sector). Yours: <b>${compact(p.pop)}</b>. To take all of their land you need more than <b>${seePop(fight)}</b> troops.` : `You can't reach ${owner.name} anywhere: you or an ally need to border them, or bring a transport or airbase close. Their people: <b>${seePop(owner.pop)}</b>. Yours: <b>${compact(p.pop)}</b>.`;
         return { html: `${toxicNote}${war}${reach} ${intel(owner)}` };
       },
     };
     return view;
   }
 
-  // Radars and scout ships near enemy land reveal what that nation has.
-  // Everything about the whole nation, wherever on their land you tapped.
-  function intel(owner) {
+  // What you learn about a rival grows with your best Spy HQ (-1 = none, which is the same as level 0).
+  const spyTier = () => Math.max(0, spyHQLevel(nations[PLAYER]));
+  // Without exact numbers a population shows as about its first digit.
+  function seePop(n) {
+    if (spyTier() >= 1) return compact(n);
+    const k = Math.pow(10, Math.max(0, Math.floor(Math.log10(Math.max(1, n)))));
+    return `about ${compact(Math.round(n / k) * k)}`;
+  }
+  function intel(owner, ally) {
     const plural = (n, w) => `${n.toLocaleString('en-US')} ${w}${n === 1 ? '' : 's'}`;
-    const silos = owner.blds.filter((b) => b.type === 'silo');
-    const bombs = silos.reduce((s, b) => s + stockTotal(b), 0);
-    const radars = owner.blds.filter((b) => b.type === 'radar').length;
-    const out = attacks.filter((a) => a.att === owner.id).reduce((s, a) => s + a.troops, 0);
-    const foes = enemiesOf(owner).map((e) => e.name), friends = alliesOf(owner).map((a) => a.name);
-    return `<br><b>${owner.name}:</b> ${compact(owner.pop)} people at home${out ? ` + ${compact(out)} troops out fighting` : ''} · ${plural(owner.tiles, 'sector')} · ${plural(owner.blds.length, 'building')} · ${plural(silos.length, 'silo')} with ${plural(bombs, 'bomb')} ready · ${plural(radars, 'radar')} · tech ${owner.tech}%.`
-      + `<br><b>At war with:</b> ${foes.length ? foes.join(', ') : 'nobody'}. <b>Allies:</b> ${friends.length ? friends.join(', ') : 'none'}.`;
+    const p = nations[PLAYER], L = ally ? 100 : spyTier();
+    const ratio = owner.pop / Math.max(1, p.pop);
+    const rough = ratio < 0.5 ? 'much weaker than you' : ratio < 0.9 ? 'weaker than you' : ratio < 1.1 ? 'about as strong as you' : ratio < 2 ? 'stronger than you' : 'much stronger than you';
+    let out = `<br><b>${owner.name}:</b> ${plural(owner.tiles, 'sector')} · ${rough}.`;
+    if (L < 1) return out + ' <i>${p.blds.some((b) => b.type === 'spy') ? 'Upgrade your Spy HQ' : 'Build a Spy HQ'} to learn more.</i>';
+    out += ` ${compact(owner.pop)} people · ${money(owner.gold)} gold · tech ${owner.tech}%.`;
+    const troops = attacks.filter((a) => a.att === owner.id).reduce((s, a) => s + a.troops, 0);
+    if (troops) out += ` ${compact(troops)} troops out fighting.`;
+    if (L >= 5) {
+      const counts = {};
+      for (const b of owner.blds) counts[b.type] = (counts[b.type] || 0) + 1;
+      // Hidden kinds you haven't found are only counted by their owner's records, so a level-5 HQ shows visible kinds and the found ones.
+      const shown = Object.entries(counts).filter(([t]) => !HIDDEN_ORDER.includes(t) || owner.blds.some((b) => b.type === t && !hiddenFrom(b)) || L >= 10);
+      out += `<br><b>Buildings:</b> ${shown.map(([t, c]) => `${c} ${BUILD[t].name.toLowerCase()}${c > 1 ? 's' : ''}`).join(', ') || 'none'}.`;
+    }
+    if (L >= 10) {
+      const foes = enemiesOf(owner).map((e) => e.name), friends = alliesOf(owner).map((a) => a.name);
+      out += `<br><b>At war with:</b> ${foes.length ? foes.join(', ') : 'nobody'}. <b>Allies:</b> ${friends.length ? friends.join(', ') : 'none'}.`;
+      const hqs = p.blds.filter((b) => b.type === 'spy' && b.on);
+      let spotted = 0;
+      for (const hq of hqs) { const c = regions[hq.idx]; spotted += revealNear(c.col + 0.5, c.row + 0.5, SPY_R(hq.level)); }
+      if (spotted) afterChange();
+      const hiddenNear = owner.blds.filter((b) => HIDDEN_ORDER.includes(b.type) && hqs.some((hq) => tileDist(hq.idx, b.idx) <= SPY_R(hq.level)));
+      if (hiddenNear.length) out += ` <b>${plural(hiddenNear.length, 'hidden building')}</b> inside your Spy HQ's range.`;
+    }
+    if (L >= 25) {
+      const silos = owner.blds.filter((b) => b.type === 'silo');
+      const stock = {};
+      for (const b of silos) for (const t of BOMB_TYPES) if (b.stock[t]) stock[t] = (stock[t] || 0) + b.stock[t];
+      const armed = Object.entries(stock).map(([t, c]) => `${c} ${BOMBS[t].name.toLowerCase()}`).join(', ');
+      const wait = Math.max(0, (owner.strikeAt || 0) - monthIndex());
+      out += `<br><b>Plans:</b> ${armed ? `armed with ${armed}` : 'no bombs ready'}${armed ? `, next strike in about ${wait} month${wait === 1 ? '' : 's'} at the earliest` : ''}.`;
+    }
+    if (L >= 50) {
+      let all = 0;
+      for (const b of owner.blds) if (hiddenFrom(b)) { found.add(b.uid); all++; spyFound++; bumpStat('spyFound'); }
+      if (all) afterChange();
+      out += ` <b>Live map:</b> every hidden building of theirs is now marked on the map.`;
+    }
+    return out;
   }
 
   function buildingSection(box, b) {
@@ -2884,7 +2995,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       sect.appendChild(docked);
       const pair = document.createElement('div');
       pair.className = 'two';
-      for (const kind of ['scout', 'transport']) {
+      for (const kind of ['scout', 'transport', ...(p.blds.some((x) => x.type === 'spy') ? ['spy'] : [])]) {
         mk(pair, 'gold', () => `${SHIPS[kind].name} · ${money(shipCost(p, kind))}`, () => buildShip(b, kind),
           { disabled: () => p.gold < shipCost(p, kind) || portShips(b).length >= PORT_SHIPS(b.level) });
       }
@@ -2974,6 +3085,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         <div class="row"><span>Difficulty</span><span>${D().name}${p.team ? ` · ${TEAM_NAMES[p.team]} team` : ''}</span></div>
         ${questProgress() ? `<div class="row"><span>Quest</span><span>${questProgress().q.name}: ${questProgress().text}</span></div>` : ''}
         <div class="row"><span>Cities</span><span>${p.cities} working · income ×${1 + p.cities}</span></div>
+        <div class="row"><span>Spy agency</span><span>${spyScans} scan${spyScans === 1 ? '' : 's'} · ${spyFound} building${spyFound === 1 ? '' : 's'} found${p.spyLevel ? ` · HQ level ${p.spyLevel - 1}` : ''}</span></div>
         <div class="row"><span>Bonuses</span><span>${[p.bankPct ? `banks +${Math.round(p.bankPct * 100)}%` : '', p.labRate ? `labs +${p.labRate} tech/mo` : '', p.monLevel ? `monument +${Math.round(monBonus(p) * 100)}% diplomacy` : ''].filter(Boolean).join(' · ') || 'None yet'}</span></div>
         <div class="row"><span>Allies</span><span>${alliesOf(p).length ? alliesOf(p).map((a) => a.name).join(', ') : 'None'}</span></div>
         <div class="row"><span>To win</span><span>Own ${WIN_SHARE * 100}% or defeat all ${ranked.length - 1} rivals</span></div>
@@ -3013,7 +3125,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   function renderBuildMenu() {
     const p = nations[PLAYER];
     if (!p) return;
-    const sig = BUILD_TYPES.map((t) => buildCost(p, t) + (p.tech < BUILD[t].tech ? 'L' : '') + (p.gold < buildCost(p, t) ? 'P' : '')).join();
+    const sig = BUILD_TYPES.map((t) => buildCost(p, t) + (p.tech < BUILD[t].tech ? 'L' : '') + (BUILD[t].need && !spyMax() ? 'S' : '') + (p.gold < buildCost(p, t) ? 'P' : '')).join();
     if (sig === buildSig && $('build-body').children.length) return;
     buildSig = sig;
     const body = $('build-body');
@@ -3022,12 +3134,12 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       const h = document.createElement('div'); h.className = 'bgroup'; h.textContent = title;
       const grid = document.createElement('div'); grid.className = 'bgrid';
       for (const t of BUILD_TYPES.filter((x) => BUILD[x].cat === cat)) {
-        const B = BUILD[t], locked = p.tech < B.tech, cost = buildCost(p, t);
+        const B = BUILD[t], locked = p.tech < B.tech || (B.need === 'spymax' && !spyMax()), cost = buildCost(p, t);
         const btn = document.createElement('button');
         btn.className = 'bitem' + (state.placing === t ? ' active' : '');
         btn.disabled = locked;
-        btn.title = B.info(1);
-        btn.innerHTML = `<svg class="i" viewBox="0 0 24 24"><path d="${ICONS[t]}"/></svg><b>${B.name}</b><span>${money(cost)}</span><small>${locked ? `Unlocks at ${B.tech}% tech` : B.coastal ? 'Coast only' : t !== 'factory' && !B.free ? 'Needs power' : 'Works anywhere'}</small>`;
+        btn.title = B.info(0);
+        btn.innerHTML = `<svg class="i" viewBox="0 0 24 24"><path d="${ICONS[t]}"/></svg><b>${B.name}</b><span>${money(cost)}</span><small>${locked ? (p.tech >= B.tech ? 'Needs a max-level Spy HQ' : `Unlocks at ${B.tech}% tech`) : B.coastal ? 'Coast only' : t !== 'factory' && !B.free ? 'Needs power' : 'Works anywhere'}</small>`;
         btn.addEventListener('click', () => { closeBuildMenu(); startPlacing(t); });
         grid.appendChild(btn);
       }
@@ -3059,6 +3171,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       nations: ids.map((id) => { const n = nations[id]; return { id, name: n.name, color: n.color, isPlayer: n.isPlayer, style: n.style, skill: n.skill, aggression: n.aggression, alive: n.alive, buys: n.buys, gold: n.gold, tech: n.tech, peak: n.peak, lastHitBy: n.lastHitBy, milestone: n.milestone, offerCd: n.offerCd, allyCd: n.allyCd, giftCd: n.giftCd, health: n.health, team: n.team }; }),
       own: u8ToB64(own), pop: u8ToB64(new Uint8Array(pop.buffer)), tox: u8ToB64(tox),
       buildings: buildings.map((b) => ({ uid: b.uid, type: b.type, level: b.level, owner: b.owner, idx: b.idx, stock: b.stock })),
+      found: [...found], spyScans, spyFound,
       ships: ships.map((s) => ({ uid: s.uid, owner: s.owner, kind: s.kind, port: s.port, x: s.x, y: s.y })),
       wars: [...wars.values()], truces: [...truces.entries()],
     };
@@ -3092,6 +3205,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (let i = 0; i < N; i++) { const r = regions[i]; r.owner = own[i] ? ids[own[i] - 1] : null; r.population = pop[i]; r.toxic = tox[i]; }
     buildings = d.buildings.map((b) => ({ ...b, level: (d.v || 0) < 4 ? Math.max(0, b.level - 1) : b.level, stock: { ...newStock(), ...b.stock } }));   // saves before v4 counted levels from 1
     for (const b of buildings) regions[b.idx].building = b;
+    found = new Set(d.found || []); spyScans = d.spyScans || 0; spyFound = d.spyFound || 0;
     ships = d.ships.map((s) => ({ kind: 'scout', owner: PLAYER, ...s, path: [], heading: 0 }));
     for (const w of d.wars) wars.set(warKey(w.a, w.b), { ...w });
     for (const [k, v] of d.truces || []) truces.set(k, v);
@@ -3983,6 +4097,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   // Bombs in flight, drawn in screen space: each kind leaves its own trail.
   function drawFlights(now, s, sx, sy) {
     for (const m of missiles) {
+      if (BOMBS[m.type].stealth && m.att !== PLAYER && !nations[PLAYER].seesStealth) continue;
       const t = clamp((gameClock - m.t0) / m.dur, 0, 1);
       const threat = m.def === PLAYER;
       const pts = [];
@@ -4129,7 +4244,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       ctx.setLineDash([]);
     }
     // Bomb ranges: around a selected silo, or from every silo that can hit a selected enemy sector.
-    const RANGE_COL = { missile: 'rgba(255,255,255,0.75)', toxic: 'rgba(124,255,46,0.85)', firestorm: 'rgba(255,150,60,0.85)', dirty: 'rgba(190,255,120,0.85)', nuke: 'rgba(255,224,102,0.9)', mirv: 'rgba(255,120,200,0.95)' };
+    const RANGE_COL = { missile: 'rgba(255,255,255,0.75)', toxic: 'rgba(124,255,46,0.85)', firestorm: 'rgba(255,150,60,0.85)', dirty: 'rgba(190,255,120,0.85)', nuke: 'rgba(255,224,102,0.9)', mirv: 'rgba(255,120,200,0.95)', spymissile: 'rgba(196,181,253,0.8)', spymirv: 'rgba(196,181,253,0.95)' };
     const selB = state.selected !== null ? regions[state.selected].building : null;
     if (selB && selB.type === 'silo' && selB.owner === PLAYER) {
       const r = regions[selB.idx];
@@ -4176,7 +4291,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const iconSize = clamp(s * 1.15, 13, 22);
     for (const b of buildings) {
       const n = nations[b.owner];
-      if (!n || (!isMe(n) && s < 9)) continue;
+      if (!n || (!isMe(n) && s < 9) || hiddenFrom(b)) continue;
       const r = regions[b.idx], x = sx(r.col + 0.5), y = sy(r.row + 0.5);
       if (!onScreen(x, y)) continue;
       drawIcon(b.type, x, y, iconSize, !b.on ? '#5b6573' : isMe(n) ? '#e4ebf3' : n.color, isMe(n) ? (b.on ? '#818cf8' : '#ec5a50') : 'rgba(4,7,11,0.8)');
@@ -4228,7 +4343,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       if (sh.kind === 'transport') { ctx.moveTo(10, 0); ctx.lineTo(6, -5); ctx.lineTo(-8, -5); ctx.lineTo(-8, 5); ctx.lineTo(6, 5); ctx.closePath(); }
       else { ctx.moveTo(9, 0); ctx.lineTo(-6, -5); ctx.lineTo(-3, 0); ctx.lineTo(-6, 5); ctx.closePath(); }
       const mine = sh.owner === PLAYER, oc = nations[sh.owner] ? nations[sh.owner].color : '#818cf8';
-      ctx.fillStyle = !mine ? oc : sh.kind === 'transport' ? '#e2b54b' : '#ffffff'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = mine ? oc : 'rgba(4,7,11,0.8)'; ctx.stroke();
+      ctx.fillStyle = !mine ? oc : sh.kind === 'transport' ? '#e2b54b' : sh.kind === 'spy' ? '#c4b5fd' : '#ffffff'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = mine ? oc : 'rgba(4,7,11,0.8)'; ctx.stroke();
       ctx.restore();
       if (state.selShip === sh) {
         ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 13, 0, 7); ctx.stroke();
