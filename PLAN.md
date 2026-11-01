@@ -2,6 +2,8 @@
 
 Everything lives in `index.html`. Phases are ordered; each should be one commit or PR.
 
+**Status:** Phases 1 to 5 are built and on the `add-game-music` branch (PR to `main` pending). Nothing after Phase 2 has been play-tested by hand, only checked by script, so every number is a first guess.
+
 ## Phase 1: Sound and feel (done)
 Built as planned. Notes from the build: music defaults to "Generated" (switch to "Tracks" in settings), the coin sound plays quietly each month, and the nuke slow-motion only plays when the blast is on screen. Not yet play-tested by ear: tune the song and effect levels in `SONGS` and `SFX`.
 - **Generated audio, no downloads.** Songs and sound effects are built with Web Audio, so nothing needs to be found or added to `audio/`. The three existing mp3s stay as an option, with a "Generated / Tracks" switch in music settings.
@@ -63,6 +65,14 @@ Fixed along the way: the Phase 4 spy intel text had a quote bug that broke the w
   - **Permanent rewards:** badges, flag frames, and a tiny starting-gold bump.
   - **Next-game-only rewards:** bonus gold, or a free bomb (including a golden bomb that looks special).
 - **Badges.** A new Badges screen lists every badge, with earned ones lit and locked ones greyed out with a hint. Badges come only from chests. The player can pick one to show next to their name. Stored with the save.
+
+## Next: tuning and known gaps
+- **Play-test and tune:** upgrade cost curve (`upgradeCost`), bomb costs and stats (`BOMBS`), MIRV count (`mirvCount`), assistant limits, spy HQ perks, chest rewards.
+- **Milestones:** only the silo bomb unlocks, factory income steps, radar steps and spy HQ intel tiers are real abilities. The other buildings only scale smoothly and still need milestone abilities.
+- **Spy radar unlock** needs a level-100 Spy HQ, which may be out of reach in a normal game.
+- **AI:** doesn't fire MIRVs, and doesn't use spy ships, planes or stealth bombs.
+- **Not tried by hand:** update button on GitHub Pages, flag video, chest animation, fog-of-war visuals.
+- **Spy agency quest:** stats and medals exist, but no quest yet.
 
 ## Not planned yet
 - **Multiplayer.** Needs a server or realtime backend and is a separate project.
