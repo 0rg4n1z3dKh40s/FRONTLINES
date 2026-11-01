@@ -69,9 +69,9 @@ Fixed along the way: the Phase 4 spy intel text had a quote bug that broke the w
 ## Next: tuning and known gaps
 - **Play-test and tune:** upgrade cost curve (`upgradeCost`), bomb costs and stats (`BOMBS`), MIRV count (`mirvCount`), assistant limits, spy HQ perks, chest rewards.
 - **Milestones:** done as stat steps at levels 10/25/50/100: port berths, city, power plant, farm, bank, lab, hospital, monument, bunker and airbase now have milestone bumps (formulas use `step`), listed in `MILESTONES`. Still plain numbers, not new abilities. Untested by play.
-- **Spy radar unlock** needs a level-100 Spy HQ, which may be out of reach in a normal game.
-- **AI:** fires MIRVs (silo 15+, rare) and spy bombs (silo 30+, rare); builds a Spy HQ and airbase, and scouts with spy planes and ships in the abstract. Findings are in `n.intel` (saved) and only intel-known silos and radars are strike targets. No spy warheads. Untested by play.
-- **Not tried by hand:** update button on GitHub Pages, flag video, chest animation, fog-of-war visuals.
+- **Spy radar unlock:** lowered to Spy HQ level 30 (`SRADAR_UNLOCK`). Untested by play.
+- **AI:** fires MIRVs (silo 15+, rare) and spy bombs (silo 30+, rare); builds a Spy HQ and airbase, and scouts with spy planes and ships in the abstract. Findings are in `n.intel` (saved) and only intel-known silos and radars are strike targets. Also rare spy warheads (silo 40+). Untested by play.
+- **Not tried by hand:** update button on GitHub Pages, chest animation, fog-of-war visuals.
 - **Spy agency quest:** added as "Shadow War" (find 6 hidden buildings); untested by play.
 
 ## Not planned yet
