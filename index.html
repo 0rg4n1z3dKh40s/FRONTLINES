@@ -204,6 +204,12 @@ tr.me td { color: #a5b0fb; }
 .modal p { margin: 0; color: var(--muted); text-align: center; }
 .modal .btns { display: grid; gap: 8px; }
 
+#fx { position: fixed; inset: 0; z-index: 26; pointer-events: none; opacity: 0; }
+#fx.win { background: radial-gradient(circle at center, rgba(255, 236, 160, 0.95), rgba(255, 190, 60, 0.5) 30%, transparent 68%); animation: fx-win 1.9s ease-out; }
+#fx.lose { background: radial-gradient(ellipse at center, rgba(120, 0, 0, 0.25), rgba(175, 12, 22, 0.85)); animation: fx-lose 2.6s ease-in-out; }
+@keyframes fx-win { 0% { opacity: 0; transform: scale(0.3); } 18% { opacity: 1; } 100% { opacity: 0; transform: scale(2.3); } }
+@keyframes fx-lose { 0% { opacity: 0; } 35% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #fx.win { animation-name: fx-lose; } #fx.lose { animation-duration: 1.2s; } }
 #splash { z-index: 40; background: radial-gradient(ellipse at center, rgba(4, 10, 20, 0.75), rgba(4, 10, 20, 0.97)); }
 .splash-list { display: grid; gap: 8px; text-align: left; }
 .splash-list li {
@@ -514,7 +520,11 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     <p class="note" id="set-msg"></p>
     <div class="field"><span class="lbl">Music</span>
       <div class="radios"><label><input type="checkbox" id="set-music"> Music</label></div></div>
+    <div class="field"><span class="lbl">Music source</span>
+      <div class="radios"><label><input type="radio" name="set-src" value="gen"> Generated</label><label><input type="radio" name="set-src" value="tracks"> Tracks</label></div></div>
     <div class="field"><label for="set-vol">Music volume</label><input type="range" id="set-vol" min="0" max="100" step="5"></div>
+    <div class="field"><span class="lbl">Sound effects</span>
+      <div class="radios"><label><input type="checkbox" id="set-sfx"> Sound effects</label></div></div>
     <button type="submit" class="btn gold">Save name</button>
     <div class="field"><span class="lbl">Account and cloud save</span>
       <p class="note" style="margin:0">Your player number: <b id="acct-num">-</b>. While you're signed in with Google (a Gmail works too), everything is saved to this number automatically. If an update or a cleared browser logs you out, sign back in and your game comes back.</p>
@@ -572,6 +582,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     </div>
   </div>
 </div>
+
+<div id="fx" aria-hidden="true"></div>
 
 <div id="endscreen" class="overlay" hidden>
   <div class="modal glass">
@@ -1135,6 +1147,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       wars.set(k, w);
       news('war', `${tag(att)} declared war on ${tag(def)}.`, att.isPlayer || def.isPlayer);
       if (att.id === LOCAL || def.id === LOCAL) medal('first_war');
+      if (def.id === LOCAL) sfxPlay('war');
       callAllies(att, def);
     }
     w.last = monthIndex();
@@ -1192,6 +1205,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     alliances.add(warKey(PLAYER, n.id));
     truces.delete(warKey(PLAYER, n.id));
     news('peace', `${tag(p)} and ${tag(n)} formed an alliance.`, true);
+    sfxPlay('alliance');
     trigger('ally');
     medal('first_ally');
     afterChange();
@@ -1237,6 +1251,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         wars.delete(k);
         truces.set(k, monthIndex() + 12);
         news('peace', `${tag(A)} and ${tag(B)} agreed to a ceasefire.`, A.isPlayer || B.isPlayer);
+        if (A.isPlayer || B.isPlayer) sfxPlay('ceasefire');
       }
     }
   }
@@ -1253,6 +1268,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     wars.delete(warKey(PLAYER, n.id));
     truces.set(warKey(PLAYER, n.id), monthIndex() + 24);
     news('peace', `${tag(p)} and ${tag(n)} signed a ceasefire.`, true);
+    sfxPlay('ceasefire');
     medal('peacemaker');
     afterChange();
     return 'yes';
@@ -1505,7 +1521,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
      Each blast stores its own random particles when it goes off, so it looks the same every frame it's drawn. */
   const BOOM_MS = { missile: 1500, toxic: 3400, nuke: 5600, intercept: 700, quake: 1400 };
   const REDUCED_MOTION = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  let shake = { until: 0, dur: 1, power: 0 }, flash = { t0: -1e9, dur: 1, power: 0 };
+  let shake = { until: 0, dur: 1, power: 0 }, flash = { t0: -1e9, dur: 1, power: 0 }, slowmo = { until: 0, dur: 1 };
+  const pulses = [];   // short rings where you just built or upgraded
   function spawnBoom(type, x, y, r) {
     const b = { x, y, t0: gameClock, r, type, parts: [] };
     const add = (n, f) => { for (let i = 0; i < n; i++) b.parts.push(f(i, n)); };
@@ -1523,9 +1540,10 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     // Only shake and flash the screen for blasts you can actually see.
     const px = camera.x + x * camera.s, py = camera.y + y * camera.s;
     const seen = state.screen === 'game' && px > -80 && px < W + 80 && py > -80 && py < H + 80;
+    if (state.screen !== 'title' && SFX[type]) sfxPlay(type, seen ? 1 : 0.35);
     if (!seen || REDUCED_MOTION) return;
     const now = performance.now();
-    if (type === 'nuke') { shake = { until: now + 1200, dur: 1200, power: 12 }; flash = { t0: now, dur: 750, power: 0.5 }; }
+    if (type === 'nuke') { shake = { until: now + 1400, dur: 1400, power: 14 }; flash = { t0: now, dur: 1100, power: 0.85 }; slowmo = { until: now + 900, dur: 900 }; }
     else if (type === 'missile' && shake.until < now) shake = { until: now + 260, dur: 260, power: 3 };
     else if (type === 'toxic' && shake.until < now) shake = { until: now + 400, dur: 400, power: 1.5 };
   }
@@ -1541,6 +1559,16 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (const [o, c] of stops) g.addColorStop(o, c);
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(x, y, R, 0, 7); ctx.fill();
+  }
+  function drawPulses(s) {
+    for (let i = pulses.length - 1; i >= 0; i--) {
+      const p = pulses[i], t = (gameClock - p.t0) / 700;
+      if (t >= 1) { pulses.splice(i, 1); continue; }
+      if (t < 0) continue;
+      const r = regions[p.idx];
+      ctx.strokeStyle = `rgba(255,214,102,${1 - t})`; ctx.lineWidth = 2.5 / s * (1 - t * 0.5);
+      ctx.beginPath(); ctx.arc(r.col + 0.5, r.row + 0.5, 0.4 + easeOut(t) * 1.8, 0, 7); ctx.stroke();
+    }
   }
   // Drawn in map space (1 unit = 1 sector), so blasts grow and shrink with the zoom.
   function drawBooms(now, s) {
@@ -1755,6 +1783,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       const base = (n.cleanTiles * 6 + n.pop / 200) / (1 + n.tiles / 500) * (n.tech / 100);
       n.income = Math.round(base * (1 + n.cities) * (1 + n.bankPct) + n.factoryInc + MON_INC[n.monLevel]);   // every working city adds another 100%; banks add a share
       n.gold += n.income;
+      if (n.isPlayer && n.income > 0) sfxPlay('coin');
     }
     checkCeasefires();
     if (rnd() < 0.08) worldEvent();
@@ -2038,6 +2067,14 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const rivalsLeft = aliveNations().some((n) => n.id !== PLAYER && n.placed !== false && !(p.team && n.team === p.team));
     if (!state.wonShown && (p.tiles / landCount >= WIN_SHARE || !rivalsLeft)) { state.wonShown = true; showEnd(true); }
   }
+  // A gold burst for a win, a red fade for a loss.
+  function endFx(won) {
+    const fx = $('fx');
+    fx.className = '';
+    void fx.offsetWidth;   // restart the animation
+    fx.className = won ? 'win' : 'lose';
+    setTimeout(() => { fx.className = ''; }, 2800);
+  }
   function showEnd(won) {
     state.over = true;
     stopRepeat(); cancelMode();
@@ -2054,6 +2091,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       $('end-text').textContent += ' Extreme difficulty is now unlocked.';
     }
     logTune(won);
+    sfxPlay(won ? 'win' : 'lose'); endFx(won);
     $('endscreen').hidden = false;
     captureFrame();
     if (won) { medal('win_' + state.diff); if (!state.firedBomb) medal('pacifist'); trigger('win'); } else trigger('lose');
@@ -2362,6 +2400,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (b.level >= 3) return;
     if (p.gold < upgradeCost(p, b)) return fail('Not enough money.');
     p.gold -= upgradeCost(p, b); bump(p, 'up'); b.level++;
+    sfxPlay('upgrade'); pulses.push({ idx: b.idx, t0: gameClock });
     toast(`${BUILD[b.type].name} upgraded to level ${b.level}.`, 'good');
     afterChange();
   }
@@ -2461,6 +2500,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const b = placeBuilding(p, type, idx);
     tally();
     medal('first_build');
+    sfxPlay('build'); pulses.push({ idx, t0: gameClock });
     toast(b.on ? `${B.name} built.` : `${B.name} built, but it has no power. Build a factory within range.`, b.on ? 'good' : 'bad');
     if (type === 'city') { for (const i of p.tileList) if (cityBoost[i]) regions[i].population = Math.min(POP_CAP * 1.9, Math.round(regions[i].population * 1.5)); medal('city1'); trigger('city'); }
     afterChange();
@@ -3100,7 +3140,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       for (const k of Object.keys(localStorage)) if (k.startsWith('gh.')) localStorage.removeItem(k);
       for (const [k, v] of Object.entries(data)) if (k.startsWith('gh.') && k !== SYNC_KEY && typeof v === 'string') localStorage.setItem(k, v);
     } catch (_) { return false; }
-    music.settings = null; syncMusicButtons();
+    music.settings = null; synth.sfxSet = null; syncMusicButtons();
     $('set-name').value = playerName();
     updateRunsCount();
     cloudRender();
@@ -3488,32 +3528,44 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   function toastTo(nid, msg, kind) { if (nid === LOCAL) showToast(msg, kind, false); }
 
   /* ================= Music ================= */
-  // "The Tightening Grip" loops as the soundtrack everywhere in the game.
+  // Two sources: songs generated with Web Audio (nothing to download), or the three mp3 tracks.
   const TRACKS = { lobby: 'audio/thirty_seconds_out.mp3', peace: 'audio/the_tightening_grip.mp3', war: 'audio/point_of_impact.mp3' };
   const music = { els: {}, cur: null, settings: null, unlocked: false };
   function musicSettings() {
-    if (!music.settings) music.settings = Object.assign({ on: true, vol: 0.6 }, store.get('gh.music') || {});
+    if (!music.settings) music.settings = Object.assign({ on: true, vol: 0.6, mode: 'gen' }, store.get('gh.music') || {});
     return music.settings;
   }
   function saveMusicSettings() { store.set('gh.music', music.settings); syncMusicButtons(); }
   function inGame() { return state.screen === 'game' && !needsStart() && !!nations[PLAYER]; }
-  // "Thirty Seconds Out" plays in the lobby (menus, founding your nation), "Point of Impact" while you're at war,
-  // "The Tightening Grip" otherwise.
+  // The lobby song plays in the menus and while founding your nation, the war song while you're at war, the peace song otherwise.
   function wantedTrack() { if (!inGame()) return 'lobby'; return enemiesOf(nations[PLAYER]).length ? 'war' : 'peace'; }
   function trackEl(k) {
     if (!music.els[k]) { const a = new Audio(TRACKS[k]); a.loop = true; music.els[k] = a; }
     return music.els[k];
   }
-  function stopMusic() { for (const a of Object.values(music.els)) a.pause(); }
+  function stopTracks(keep) { for (const [k, a] of Object.entries(music.els)) if (k !== keep && !a.paused) { a.pause(); a.currentTime = 0; } }
+  function stopMusic() { for (const a of Object.values(music.els)) a.pause(); stopGen(); }
+  function applyMusicVol() {
+    const v = musicSettings().vol;
+    if (synth.music) synth.music.gain.value = v * 0.6;
+    for (const a of Object.values(music.els)) a.volume = v;
+  }
   // Browsers only allow sound after the viewer interacts, so this runs on the first tap or key press.
   function startMusic() {
     if (!music.unlocked || !musicSettings().on) return;
     const k = wantedTrack();
-    if (music.cur && music.cur !== k) { const o = music.els[music.cur]; o.pause(); o.currentTime = 0; }
-    music.cur = k;
-    const a = trackEl(k);
-    a.volume = musicSettings().vol;
-    if (a.paused) a.play().catch(() => {});
+    if (musicSettings().mode === 'tracks') {
+      stopGen();
+      stopTracks(k);
+      music.cur = k;
+      const a = trackEl(k);
+      a.volume = musicSettings().vol;
+      if (a.paused) a.play().catch(() => {});
+    } else {
+      stopTracks();
+      music.cur = k;
+      if (audioCtx()) { applyMusicVol(); playGen(k); }
+    }
   }
   // Keeps the right song playing as you move between lobby, peace and war (after the first click).
   setInterval(() => { if (!document.hidden && music.cur) startMusic(); }, 300);
@@ -3524,12 +3576,181 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     saveMusicSettings();
     if (st.on) startMusic(); else stopMusic();
   }
+  function setMusicMode(mode) {
+    const st = musicSettings();
+    if (st.mode === mode) return;
+    st.mode = mode;
+    saveMusicSettings();
+    stopMusic();
+    startMusic();
+  }
   function syncMusicButtons() {
     const on = musicSettings().on;
     const b = $('btn-music');
     if (b) { b.classList.toggle('active', !on); b.title = on ? 'Music on (M)' : 'Music off (M)'; b.setAttribute('aria-label', b.title); b.querySelector('.slash').style.display = on ? 'none' : ''; }
     const t = $('set-music'); if (t) t.checked = on;
     const v = $('set-vol'); if (v) v.value = Math.round(musicSettings().vol * 100);
+    for (const r of document.querySelectorAll('input[name="set-src"]')) r.checked = r.value === musicSettings().mode;
+    const s = $('set-sfx'); if (s) s.checked = sfxSettings().on;
+  }
+
+  /* ================= Generated audio ================= */
+  // Songs and sound effects are synthesised here with Web Audio. Audio uses Math.random so it never disturbs the seeded game.
+  const synth = { ctx: null, music: null, sfx: null, noise: null, sfxSet: null };
+  function audioCtx() {
+    if (!music.unlocked) return null;
+    if (!synth.ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      const c = new AC(), comp = c.createDynamicsCompressor();
+      comp.connect(c.destination);
+      synth.music = c.createGain(); synth.music.gain.value = musicSettings().vol * 0.6; synth.music.connect(comp);
+      synth.sfx = c.createGain(); synth.sfx.gain.value = 0.7; synth.sfx.connect(comp);
+      const len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      synth.noise = buf; synth.ctx = c;
+    }
+    if (synth.ctx.state === 'suspended') synth.ctx.resume().catch(() => {});
+    return synth.ctx;
+  }
+  const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  // One note. o: type, vol, attack, to (slide to this pitch), lp (low-pass), hold (sustain, for pads).
+  function tone(c, bus, t, f, dur, o = {}) {
+    const osc = c.createOscillator(), g = c.createGain(), v = o.vol === undefined ? 0.2 : o.vol, a = o.attack === undefined ? 0.005 : o.attack;
+    osc.type = o.type || 'sine';
+    osc.frequency.setValueAtTime(f, t);
+    if (o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v, t + a);
+    if (o.hold) g.gain.setValueAtTime(v, t + Math.max(a, dur - 0.4));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    let out = osc;
+    if (o.lp) { const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = o.lp; osc.connect(lp); out = lp; }
+    out.connect(g); g.connect(bus);
+    osc.start(t); osc.stop(t + dur + 0.05);
+  }
+  // A burst of filtered noise. o: type (filter), from/to (filter sweep), q, vol, attack.
+  function noiseHit(c, bus, t, dur, o = {}) {
+    const src = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), v = o.vol === undefined ? 0.2 : o.vol, a = o.attack === undefined ? 0.003 : o.attack;
+    src.buffer = synth.noise; src.loop = true;
+    f.type = o.type || 'lowpass'; f.Q.value = o.q || 0.7;
+    f.frequency.setValueAtTime(o.from || 1000, t);
+    if (o.to) f.frequency.exponentialRampToValueAtTime(o.to, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(v, t + a);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f); f.connect(g); g.connect(bus);
+    src.start(t, Math.random()); src.stop(t + dur + 0.05);
+  }
+
+  /* ----- Songs -----
+     Each song is a 4-bar loop of 16th-note steps. Patterns are 16-character strings, one character per step ('.' is a rest).
+     In 'arp', the digit picks a chord note (3 is the root, two octaves up). */
+  const SONGS = {
+    lobby: { bpm: 76, chords: [[57, 60, 64], [53, 57, 60], [60, 64, 67], [55, 59, 62]],
+      pad: { type: 'triangle', vol: 0.05, attack: 1.2 }, bass: { pat: 'x.......x.......', type: 'sine', vol: 0.2, len: 6 },
+      arp: { pat: '0.1.2.1.0.1.2.3.', type: 'sine', vol: 0.06, len: 2.5 }, kick: '', snare: '', hat: '' },
+    peace: { bpm: 104, chords: [[62, 66, 69], [59, 62, 66], [55, 59, 62], [57, 61, 64]],
+      pad: { type: 'triangle', vol: 0.045, attack: 0.4 }, bass: { pat: 'x..x..x.x..x..x.', type: 'triangle', vol: 0.22, len: 1.6 },
+      arp: { pat: '0.1.2.1.3.2.1.2.', type: 'triangle', vol: 0.07, len: 1.8 }, kick: 'x.......x.......', snare: '', hat: '..x...x...x...x.' },
+    war: { bpm: 138, chords: [[62, 65, 69], [58, 62, 65], [60, 64, 67], [57, 61, 64]],
+      pad: { type: 'sawtooth', vol: 0.025, attack: 0.1, lp: 900 }, bass: { pat: 'xx.xx.x.xx.xx.x.', type: 'sawtooth', vol: 0.2, len: 1.3, lp: 520 },
+      arp: { pat: '0.1.2.1.0.1.2.3.', type: 'square', vol: 0.035, len: 1.4, lp: 2200 }, kick: 'x...x...x...x...', snare: '....x.......x...', hat: 'x.x.x.x.x.x.x.xx' },
+  };
+  function musicStep(c, S, step, t, sd) {
+    const bar = Math.floor(step / 16) % 4, s = step % 16, ch = S.chords[bar], bus = gen.bus;
+    if (!bus) return;
+    if (s === 0) for (const n of ch) tone(c, bus, t, mtof(n), sd * 16 * 0.98, { type: S.pad.type, vol: S.pad.vol, attack: S.pad.attack, lp: S.pad.lp, hold: true });
+    if (S.bass.pat[s] === 'x') tone(c, bus, t, mtof(ch[0] - 12), sd * S.bass.len, { type: S.bass.type, vol: S.bass.vol, lp: S.bass.lp, attack: 0.01 });
+    const a = S.arp.pat[s];
+    if (a !== '.') { const i = +a; tone(c, bus, t, mtof(i > 2 ? ch[0] + 24 : ch[i] + 12), sd * S.arp.len, { type: S.arp.type, vol: S.arp.vol, lp: S.arp.lp }); }
+    if (S.kick[s] === 'x') { tone(c, bus, t, 150, 0.16, { to: 42, vol: 0.5 }); }
+    if (S.snare[s] === 'x') { noiseHit(c, bus, t, 0.14, { type: 'highpass', from: 1800, vol: 0.22 }); tone(c, bus, t, 190, 0.1, { type: 'triangle', vol: 0.15 }); }
+    if (S.hat[s] === 'x') noiseHit(c, bus, t, 0.04, { type: 'highpass', from: 7000, vol: 0.07 });
+  }
+  const gen = { song: null, bus: null, step: 0, next: 0, timer: 0 };
+  function playGen(k) {
+    const c = synth.ctx;
+    if (!c || (gen.song === k && gen.timer)) return;
+    stopGen(1.2);
+    const bus = c.createGain();
+    bus.gain.setValueAtTime(0.0001, c.currentTime);
+    bus.gain.linearRampToValueAtTime(1, c.currentTime + 1.2);
+    bus.connect(synth.music);
+    gen.song = k; gen.bus = bus; gen.step = 0; gen.next = c.currentTime + 0.15;
+    gen.timer = setInterval(pumpGen, 100);
+  }
+  // Schedules notes a little ahead of the clock so timing stays tight even when the page is busy.
+  function pumpGen() {
+    const c = synth.ctx, S = SONGS[gen.song];
+    if (!c || !S) return;
+    const sd = 60 / S.bpm / 4;
+    while (gen.next < c.currentTime + 0.5) { musicStep(c, S, gen.step, gen.next, sd); gen.next += sd; gen.step = (gen.step + 1) % 64; }
+  }
+  function stopGen(fade = 0.4) {
+    clearInterval(gen.timer); gen.timer = 0;
+    const b = gen.bus;
+    if (b && synth.ctx) {
+      const t = synth.ctx.currentTime;
+      b.gain.cancelScheduledValues(t); b.gain.setValueAtTime(b.gain.value, t); b.gain.linearRampToValueAtTime(0.0001, t + fade);
+      setTimeout(() => b.disconnect(), fade * 1000 + 1500);
+    }
+    gen.bus = null; gen.song = null;
+  }
+
+  /* ----- Sound effects ----- */
+  function sfxSettings() {
+    if (!synth.sfxSet) synth.sfxSet = Object.assign({ on: true }, store.get('gh.sfx') || {});
+    return synth.sfxSet;
+  }
+  const SFX = {
+    missile(c, t, v) { const B = synth.sfx; noiseHit(c, B, t, 0.7, { from: 2400, to: 150, vol: 0.5 * v }); tone(c, B, t, 140, 0.35, { to: 40, vol: 0.6 * v }); },
+    toxic(c, t, v) {
+      const B = synth.sfx;
+      noiseHit(c, B, t, 1.6, { type: 'bandpass', from: 900, to: 250, q: 2, vol: 0.3 * v, attack: 0.15 });
+      for (let i = 0; i < 5; i++) { const f = 300 + Math.random() * 300; tone(c, B, t + 0.1 + i * 0.18, f, 0.1, { to: f * 1.8, vol: 0.12 * v }); }
+    },
+    nuke(c, t, v) {
+      const B = synth.sfx;
+      noiseHit(c, B, t, 0.18, { type: 'highpass', from: 800, vol: 0.6 * v });
+      tone(c, B, t, 80, 4, { to: 24, vol: 0.9 * v, attack: 0.05 });
+      noiseHit(c, B, t, 4, { from: 1200, to: 60, vol: 0.8 * v, attack: 0.08 });
+      noiseHit(c, B, t + 0.5, 3, { from: 320, to: 50, vol: 0.5 * v, attack: 0.4 });
+    },
+    intercept(c, t, v) { const B = synth.sfx; tone(c, B, t, 1400, 0.18, { to: 300, type: 'triangle', vol: 0.25 * v }); noiseHit(c, B, t, 0.08, { type: 'highpass', from: 3000, vol: 0.15 * v }); },
+    build(c, t, v) {
+      const B = synth.sfx;
+      tone(c, B, t, 220, 0.08, { type: 'square', vol: 0.12 * v, lp: 1200 }); tone(c, B, t + 0.09, 330, 0.1, { type: 'square', vol: 0.12 * v, lp: 1200 });
+      noiseHit(c, B, t, 0.04, { type: 'highpass', from: 4000, vol: 0.1 * v });
+    },
+    upgrade(c, t, v) { [523, 659, 784, 1047].forEach((f, i) => tone(c, synth.sfx, t + i * 0.07, f, 0.25, { type: 'triangle', vol: 0.15 * v })); },
+    coin(c, t, v) { tone(c, synth.sfx, t, 1319, 0.09, { vol: 0.08 * v }); tone(c, synth.sfx, t + 0.06, 1760, 0.18, { vol: 0.08 * v }); },
+    war(c, t, v) {
+      for (const dt of [0, 0.55]) {
+        tone(c, synth.sfx, t + dt, 98, 0.9, { to: 82, type: 'sawtooth', vol: 0.3 * v, lp: 700, attack: 0.05 });
+        tone(c, synth.sfx, t + dt, 116, 0.9, { to: 96, type: 'sawtooth', vol: 0.2 * v, lp: 700, attack: 0.05 });
+      }
+    },
+    alliance(c, t, v) { [523, 659, 784].forEach((f, i) => tone(c, synth.sfx, t + i * 0.09, f, 0.6, { type: 'triangle', vol: 0.15 * v })); },
+    ceasefire(c, t, v) { tone(c, synth.sfx, t, 392, 0.7, { vol: 0.16 * v }); tone(c, synth.sfx, t + 0.25, 523, 0.9, { vol: 0.16 * v }); },
+    win(c, t, v) {
+      [392, 523, 659, 784].forEach((f, i) => tone(c, synth.sfx, t + i * 0.16, f, 0.4, { type: 'square', vol: 0.1 * v, lp: 2500 }));
+      [523, 659, 784, 1047].forEach((f) => tone(c, synth.sfx, t + 0.7, f, 1.6, { type: 'triangle', vol: 0.12 * v, attack: 0.02 }));
+    },
+    lose(c, t, v) {
+      [330, 262, 220, 165].forEach((f, i) => tone(c, synth.sfx, t + i * 0.35, f, 0.7, { type: 'sawtooth', vol: 0.12 * v, lp: 600, attack: 0.03 }));
+      tone(c, synth.sfx, t, 55, 2.2, { vol: 0.35 * v, attack: 0.2 });
+    },
+  };
+  const sfxLast = {};
+  function sfxPlay(name, vol = 1) {
+    if (!sfxSettings().on) return;
+    const c = audioCtx();
+    if (!c) return;
+    const now = performance.now();
+    if (now - (sfxLast[name] || 0) < 60) return;
+    sfxLast[name] = now;
+    SFX[name](c, c.currentTime + 0.01, vol);
   }
 
   /* ================= Rendering ================= */
@@ -3825,6 +4046,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
 
     // Explosions: each bomb type has its own animation
     drawBooms(now, s);
+    drawPulses(s);
 
     // ---- Screen space ----
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -3952,12 +4174,14 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     }
     if (state.screen === 'replay') stepReplay(dt);
     if (running()) {
-      gameClock += dt; acc += dt;
+      // A nuke you can see slows the world for a moment, then eases back to full speed.
+      const gdt = now < slowmo.until ? dt * (1 - 0.8 * (slowmo.until - now) / slowmo.dur) : dt;
+      gameClock += gdt; acc += gdt;
       while (acc >= TICK_MS && running()) { acc -= TICK_MS; tick(); }
-      atkAcc += dt;
+      atkAcc += gdt;
       while (atkAcc >= 250 && running()) { atkAcc -= 250; stepAttacks(); }
       updateMissiles();
-      updateShips(dt);
+      updateShips(gdt);
     }
     draw(now);
     requestAnimationFrame(frame);
@@ -4086,10 +4310,12 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   $('set-vol').addEventListener('input', (e) => {
     musicSettings().vol = +e.target.value / 100;
     saveMusicSettings();
-    if (music.cur) music.els[music.cur].volume = musicSettings().vol;
+    applyMusicVol();
   });
+  for (const r of document.querySelectorAll('input[name="set-src"]')) r.addEventListener('change', (e) => { if (e.target.checked) setMusicMode(e.target.value); });
+  $('set-sfx').addEventListener('change', (e) => { sfxSettings().on = e.target.checked; store.set('gh.sfx', sfxSettings()); if (e.target.checked) sfxPlay('upgrade'); });
   // Sound may only start after the viewer interacts with the page.
-  const kickoff = () => { if (musicSettings().on && !(music.cur && !music.els[music.cur].paused)) startMusic(); };
+  const kickoff = () => { if (musicSettings().on) startMusic(); };
   window.addEventListener('pointerdown', kickoff);
   window.addEventListener('keydown', kickoff);
   document.addEventListener('visibilitychange', () => {
