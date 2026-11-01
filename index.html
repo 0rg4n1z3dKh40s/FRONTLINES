@@ -3723,6 +3723,12 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       tone(c, B, t, 220, 0.08, { type: 'square', vol: 0.12 * v, lp: 1200 }); tone(c, B, t + 0.09, 330, 0.1, { type: 'square', vol: 0.12 * v, lp: 1200 });
       noiseHit(c, B, t, 0.04, { type: 'highpass', from: 4000, vol: 0.1 * v });
     },
+    // A soft, close "thock": a tiny band-passed tick over a short low pop, with a little random pitch so it never feels repeated.
+    click(c, t, v) {
+      const B = synth.sfx, k = 0.94 + Math.random() * 0.12;
+      noiseHit(c, B, t, 0.03, { type: 'bandpass', from: 3600 * k, to: 2200 * k, q: 1.4, vol: 0.22 * v, attack: 0.001 });
+      tone(c, B, t, 440 * k, 0.07, { to: 250 * k, vol: 0.2 * v, attack: 0.002 });
+    },
     upgrade(c, t, v) { [523, 659, 784, 1047].forEach((f, i) => tone(c, synth.sfx, t + i * 0.07, f, 0.25, { type: 'triangle', vol: 0.15 * v })); },
     coin(c, t, v) { tone(c, synth.sfx, t, 1319, 0.09, { vol: 0.08 * v }); tone(c, synth.sfx, t + 0.06, 1760, 0.18, { vol: 0.08 * v }); },
     war(c, t, v) {
@@ -4315,6 +4321,11 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   for (const r of document.querySelectorAll('input[name="set-src"]')) r.addEventListener('change', (e) => { if (e.target.checked) setMusicMode(e.target.value); });
   $('set-sfx').addEventListener('change', (e) => { sfxSettings().on = e.target.checked; store.set('gh.sfx', sfxSettings()); if (e.target.checked) sfxPlay('upgrade'); });
   // Sound may only start after the viewer interacts with the page.
+  // Every button, switch and menu item gets the click sound (taps on the map itself don't).
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest && e.target.closest('button, .btn, [role="button"], summary, select, input[type="checkbox"], input[type="radio"], label');
+    if (el && !el.disabled) sfxPlay('click');
+  }, true);
   const kickoff = () => { if (musicSettings().on) startMusic(); };
   window.addEventListener('pointerdown', kickoff);
   window.addEventListener('keydown', kickoff);
