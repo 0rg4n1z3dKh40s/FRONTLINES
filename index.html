@@ -608,6 +608,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
 
   const TICK_MS = 1000;              // one game month per real second
   const POP_CAP = 5000;
+  const WIN_EARLY = 0.9;             // at 90% you may already call it a win, or carry on to…
   const WIN_SHARE = 0.98;            // own 98% of the land, or…
   const COLLAPSE_SHARE = 0.02;       // …knock every rival down to 2% of its peak size
   const START_GOLD = 1200;
@@ -616,13 +617,13 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   // peaceYears: no wars at all at the start · grace: months before anyone may attack you
   // war/bomb: how often rivals fight and bomb · bombYears: years before the first bomb · bombDelay: months a war must last before bombs fly
   const DIFFS = {
-    easy:    { name: 'Easy',    level: 1, peaceYears: 2, grace: 20, war: 0.45, bomb: 0.28, bombYears: 1, bombDelay: 6, toxic: false, nukeYears: null, blast: 0.7, shield: 0.24, allyOdds: 0.72, aiAlly: 0.22, ffa: false, rampYears: 60, calm: [26, 8],
+    easy:    { name: 'Easy',    level: 1, peaceYears: 2, grace: 20, war: 0.45, bomb: 0.28, bombYears: 1, bombDelay: 6, toxic: false, nukeYears: null, strikeCd: 30, blast: 0.7, shield: 0.24, allyOdds: 0.72, aiAlly: 0.22, ffa: false, rampYears: 60, calm: [26, 8],
                desc: 'Rivals mostly grow their land. Now and then someone fires a small missile.' },
-    medium:  { name: 'Medium',  level: 2, peaceYears: 2, grace: 15, war: 0.72, bomb: 0.5, bombYears: 2, bombDelay: 5, toxic: true,  nukeYears: 6,    blast: 0.92, shield: 0.08, allyOdds: 0.52, aiAlly: 0.17, ffa: false, rampYears: 40, calm: [20, 5],
+    medium:  { name: 'Medium',  level: 2, peaceYears: 2, grace: 15, war: 0.72, bomb: 0.5, bombYears: 2, bombDelay: 5, toxic: true,  nukeYears: 6,    strikeCd: 20, blast: 0.92, shield: 0.08, allyOdds: 0.52, aiAlly: 0.17, ffa: false, rampYears: 40, calm: [20, 5],
                desc: 'A calm start, then wars over land. Bombs are regular but not constant.' },
-    hard:    { name: 'Hard',    level: 3, peaceYears: 1, grace: 10, war: 1.15, bomb: 1.15, bombYears: 1, bombDelay: 2, toxic: true,  nukeYears: 2,    blast: 1.05, shield: 0,    allyOdds: 0.34, aiAlly: 0.12, ffa: false, rampYears: 25, calm: [14, 3],
+    hard:    { name: 'Hard',    level: 3, peaceYears: 1, grace: 10, war: 1.15, bomb: 1.15, bombYears: 1, bombDelay: 2, toxic: true,  nukeYears: 2,    strikeCd: 12, blast: 1.05, shield: 0,    allyOdds: 0.34, aiAlly: 0.12, ffa: false, rampYears: 25, calm: [14, 3],
                desc: 'Constant wars and frequent bombing between every nation, you included.' },
-    extreme: { name: 'Extreme', level: 4, peaceYears: 0, grace: 4,  war: 1.85, bomb: 1.95, bombYears: 0, bombDelay: 0, toxic: true,  nukeYears: 0,    blast: 1.15, shield: 0,    allyOdds: 0.08, aiAlly: 0,    ffa: true,  rampYears: 10, calm: [6, 1],
+    extreme: { name: 'Extreme', level: 4, peaceYears: 0, grace: 4,  war: 1.85, bomb: 1.95, bombYears: 0, bombDelay: 0, toxic: true,  nukeYears: 0,    strikeCd: 6,  blast: 1.15, shield: 0,    allyOdds: 0.08, aiAlly: 0,    ffa: true,  rampYears: 10, calm: [6, 1],
                desc: 'Every nation fights every neighbour, wars never cool down, and nobody wants friends.' },
   };
   const DIFF_KEYS = Object.keys(DIFFS);
@@ -933,7 +934,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     wars.clear(); truces.clear(); alliances.clear(); attacks = []; attackSig = ''; if ($('attacks')) { $('attacks').hidden = true; $('attacks').innerHTML = ''; }
     gameClock = 0; nextUid = 1;
     territoryDirty = true; toxicDirty = true;
-    Object.assign(state, { started: false, over: false, wonShown: false, paused: false, month: 0, year: 2000, selected: null, selShip: null, placing: null, targeting: null, playerCalm: 0 });
+    Object.assign(state, { started: false, over: false, wonShown: false, won90: false, paused: false, month: 0, year: 2000, selected: null, selShip: null, placing: null, targeting: null, playerCalm: 0 });
     hideContext(); closeSheet(); cancelMode(); closeChat(); closeBuildMenu();
     fired.clear();
     $('endscreen').hidden = true; $('pause').hidden = true;
@@ -1106,7 +1107,15 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const bump = (n, key) => { n.buys[key] = (n.buys[key] || 0) + 1; };
   const claimCost = (n) => price(n, 'land', 100, 0.03);                          // +$3 per claim or attack
   const buildCost = (n, type) => price(n, 'b:' + type, BUILD[type].cost, BUILD[type].step || 0.25);  // +25% per building of that kind (+60% for cities)
-  const bombCost = (n, type) => price(n, 'bomb:' + type, BOMBS[type].cost, 0.15);
+  // An AI that keeps firing pays more per bomb: each shot adds heat, which fades slowly (1 per 12 months).
+  const AI_HEAT_COST = 0.45, AI_HEAT_MAX = 4;
+  function aiHeat(n) {
+    const now = monthIndex();
+    n.heat = Math.max(0, (n.heat || 0) - (now - (n.heatAt ?? now)) / 12);
+    n.heatAt = now;
+    return n.heat;
+  }
+  const bombCost = (n, type) => Math.round(price(n, 'bomb:' + type, BOMBS[type].cost, 0.15) * (n.isPlayer ? 1 : 1 + AI_HEAT_COST * aiHeat(n)));
   const shipCost = (n, kind) => price(n, 'ship:' + kind, SHIPS[kind].cost, 0.3);
   const cleanupCost = (n) => price(n, 'clean', CLEANUP_COST, 0.25);
   const upgradeCost = (n, b) => Math.round(BUILD[b.type].cost * (b.level === 1 ? 1.25 : 2) * (1 + 0.15 * (n.buys.up || 0)));
@@ -1298,6 +1307,15 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (const [i] of near) { const c = sectorCost(att, def, i); if (left < c) break; left -= c; n++; }
     return n;
   }
+  // Live odds for an invasion: the army against the people in the nearest enemy sectors (the first dozen it has to get through).
+  // Equal strength is 50%; double is about 90%.
+  function survivalChance(att, def, idx, troops) {
+    const near = def.tileList.map((i) => [i, tileDist(i, idx)]).sort((x, y) => x[1] - y[1]).slice(0, 12);
+    const need = near.reduce((sum, [i]) => sum + sectorCost(att, def, i), 0);
+    if (troops <= 0) return 0;
+    if (need <= 0) return 1;
+    return 1 / (1 + Math.pow(need / troops, 3));
+  }
   function startAttack(att, def, idx, pct) {
     if (def.isPlayer && !att.isPlayer && playerUnderAttack(att.id)) return null;   // one rival army at you at a time
     const troops = Math.floor(att.pop * pct / 100);
@@ -1307,7 +1325,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const same = attacks.find((a) => a.att === att.id && a.def === def.id);
     if (same) { same.troops += troops; same.start += troops; same.origin = idx; return same; }
     // Being invaded doesn't make a rival invade back: each invasion rolls once for whether they retaliate.
-    const retal = !def.isPlayer && rnd() < lerp(0.15, 0.5, def.aggression);
+    // On Easy only 10% answer back, and the bigger the nation the less likely it is.
+    const answer = D().level === 1 ? 0.1 * (1 - Math.min(1, def.tiles / landCount / 0.3)) : lerp(0.15, 0.5, def.aggression);
+    const retal = !def.isPlayer && rnd() < answer;
     const a = { id: nextUid++, att: att.id, def: def.id, troops, start: troops, origin: idx, taken: 0, landing: !borders(idx, att.id), retal };
     attacks.push(a);
     return a;
@@ -2002,8 +2022,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     }
     return best;
   }
+  let lastAiStrike = -1;   // month of the last AI bomb anywhere: at most one a month in the whole world
   function aiStrike(n) {
-    if (!bombsAllowed()) return;
+    if (!bombsAllowed() || lastAiStrike === monthIndex() || (n.strikeAt || 0) > monthIndex()) return;
     // Bombs only fly in wars that have dragged on a while, and less often on easier modes.
     const enemies = enemiesOf(n).filter((e) => {
       const w = wars.get(warKey(n.id, e.id));
@@ -2025,7 +2046,13 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const order = target.tiles > 80 || rnd() < 0.3 ? ['nuke', 'toxic', 'missile'] : ['toxic', 'missile', 'nuke'];
     for (const type of order) {
       const silo = silos.find((s) => s.stock[type] && siloReach(s, idx, type));
-      if (silo) { launchBomb(n, silo, type, idx); return; }
+      if (silo) {
+        if (!launchBomb(n, silo, type, idx)) return;
+        lastAiStrike = monthIndex();
+        n.strikeAt = monthIndex() + Math.round(D().strikeCd * (0.8 + rnd() * 0.4));
+        n.heat = Math.min(AI_HEAT_MAX, aiHeat(n) + 1);
+        return;
+      }
     }
   }
 
@@ -2065,7 +2092,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const p = nations[PLAYER];
     if (!p.alive) return showEnd(false);
     const rivalsLeft = aliveNations().some((n) => n.id !== PLAYER && n.placed !== false && !(p.team && n.team === p.team));
-    if (!state.wonShown && (p.tiles / landCount >= WIN_SHARE || !rivalsLeft)) { state.wonShown = true; showEnd(true); }
+    const share = p.tiles / landCount;
+    if (!state.wonShown && (share >= WIN_SHARE || !rivalsLeft)) { state.wonShown = true; showEnd(true); }
+    else if (!state.wonShown && !state.won90 && share >= WIN_EARLY) { state.won90 = true; showEnd(true, true); }
   }
   // A gold burst for a win, a red fade for a loss.
   function endFx(won) {
@@ -2075,16 +2104,18 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     fx.className = won ? 'win' : 'lose';
     setTimeout(() => { fx.className = ''; }, 2800);
   }
-  function showEnd(won) {
+  function showEnd(won, early) {
     state.over = true;
     stopRepeat(); cancelMode();
     const p = nations[PLAYER];
     $('end-title').textContent = won ? 'Victory' : `${p.name} has fallen`;
     $('end-text').textContent = won
-      ? `${p.name} rules ${(p.tiles / landCount * 100).toFixed(1)}% of the world and no rival can stop it.`
+      ? early ? `You win! ${p.name} rules ${(p.tiles / landCount * 100).toFixed(1)}% of the world. Finish here, or continue to take it all (${WIN_SHARE * 100}%).`
+        : `${p.name} rules ${(p.tiles / landCount * 100).toFixed(1)}% of the world and no rival can stop it.`
       : 'Your last land has fallen. Would you like to watch the replay?';
     $('end-continue').hidden = !won;
-    $('end-continue').textContent = 'Keep playing';
+    $('end-continue').textContent = early ? 'Continue' : 'Keep playing';
+    $('end-menu').textContent = early ? 'Finish' : 'Main menu';
     $('end-replay').hidden = false;
     if (won && state.diff === 'hard' && !store.get('gh.extreme')) {
       store.set('gh.extreme', true);
@@ -2094,7 +2125,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     sfxPlay(won ? 'win' : 'lose'); endFx(won);
     $('endscreen').hidden = false;
     captureFrame();
-    if (won) { medal('win_' + state.diff); if (!state.firedBomb) medal('pacifist'); trigger('win'); } else trigger('lose');
+    if (won && !(state.won90 && !early)) { medal('win_' + state.diff); if (!state.firedBomb) medal('pacifist'); trigger('win'); } else if (!won) trigger('lose');
     checkProgress();
     saveRun();
     saveReplay(won);
@@ -2672,7 +2703,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
             const seg = document.createElement('div'); seg.className = 'pcts';
             const est = document.createElement('div'); est.className = 'troops';
             const troops = () => Math.floor(p.pop * state.attackPct / 100);
-            live(est, () => `${troops().toLocaleString('en-US')} troops`);
+            const odds = document.createElement('div'); odds.className = 'troops';
+            live(est, () => `${troops().toLocaleString('en-US')} troops · ${Math.round(survivalChance(p, owner, r.id, troops()) * 100)}% chance to win`);
+            live(odds, () => `You ${Math.round(p.pop).toLocaleString('en-US')} people · ${owner.name} ${Math.round(owner.pop).toLocaleString('en-US')}`);
             for (const pc of ATTACK_PCTS) {
               const b = document.createElement('button');
               b.type = 'button';
@@ -2687,7 +2720,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
               armed = false;
               invadeSector(r.id, state.attackPct);
             }, { disabled: () => troops() < 40 });
-            sect.prepend(head); sect.insertBefore(seg, go); sect.insertBefore(est, go);
+            sect.prepend(head); sect.insertBefore(seg, go); sect.insertBefore(est, go); sect.insertBefore(odds, go);
             box.appendChild(sect);
           }
           const strikes = document.createElement('div');
@@ -2943,7 +2976,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const own = new Uint8Array(N), pop = new Uint16Array(N), tox = new Uint8Array(N);
     for (let i = 0; i < N; i++) { const r = regions[i]; own[i] = r.owner ? index.get(r.owner) : 0; pop[i] = r.population; tox[i] = r.toxic; }
     return {
-      v: 3, cfg: state.cfg, history, shotDown: state.shotDown, firedBomb: state.firedBomb, questDone: state.questDone, diff: state.diff, startMonth: state.startMonth, alliances: [...alliances], runNo: state.runNo, month: state.month, year: state.year, gameClock, nextUid, wonShown: state.wonShown, tuneK: state.tuneK, tuneLogged: state.tuneLogged, playerCalm: state.playerCalm || 0,
+      v: 3, cfg: state.cfg, history, shotDown: state.shotDown, firedBomb: state.firedBomb, questDone: state.questDone, diff: state.diff, startMonth: state.startMonth, alliances: [...alliances], runNo: state.runNo, month: state.month, year: state.year, gameClock, nextUid, wonShown: state.wonShown, won90: state.won90, tuneK: state.tuneK, tuneLogged: state.tuneLogged, playerCalm: state.playerCalm || 0,
       nations: ids.map((id) => { const n = nations[id]; return { id, name: n.name, color: n.color, isPlayer: n.isPlayer, style: n.style, skill: n.skill, aggression: n.aggression, alive: n.alive, buys: n.buys, gold: n.gold, tech: n.tech, peak: n.peak, lastHitBy: n.lastHitBy, milestone: n.milestone, offerCd: n.offerCd, allyCd: n.allyCd, giftCd: n.giftCd, health: n.health, team: n.team }; }),
       own: u8ToB64(own), pop: u8ToB64(new Uint8Array(pop.buffer)), tox: u8ToB64(tox),
       buildings: buildings.map((b) => ({ uid: b.uid, type: b.type, level: b.level, owner: b.owner, idx: b.idx, stock: b.stock })),
@@ -2985,7 +3018,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (const [k, v] of d.truces || []) truces.set(k, v);
     for (const k of d.alliances || []) alliances.add(k);
     state.cfg = d.cfg || {}; history = d.history || []; state.shotDown = d.shotDown || 0; state.firedBomb = !!d.firedBomb; state.questDone = !!d.questDone;
-    Object.assign(state, { started: true, month: d.month, year: d.year, runId: id, runNo: d.runNo, wonShown: d.wonShown, diff: d.diff || 'hard', startMonth: d.startMonth ?? 24000, tuneK: d.tuneK ?? null, tuneLogged: !!d.tuneLogged, playerCalm: d.playerCalm || 0 });
+    Object.assign(state, { started: true, month: d.month, year: d.year, runId: id, runNo: d.runNo, wonShown: d.wonShown, won90: !!d.won90, diff: d.diff || 'hard', startMonth: d.startMonth ?? 24000, tuneK: d.tuneK ?? null, tuneLogged: !!d.tuneLogged, playerCalm: d.playerCalm || 0 });
     applyTune();
     gameClock = d.gameClock; nextUid = d.nextUid;
     enterGame();
