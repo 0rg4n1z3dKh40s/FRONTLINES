@@ -684,25 +684,35 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const SILO_RANGE = (l) => Math.min(2.5, 1 + 0.03 * l);
   const RADAR_RANGE = (l) => Math.round(7 + 0.3 * l);
   const RADAR_CHANCE = (l) => Math.min(0.95, 0.55 + 0.01 * l + 0.05 * step(l, 10, 25));
-  const PORT_SHIPS = (l) => 1 + Math.floor(l / 3);
+  const PORT_SHIPS = (l) => 1 + Math.floor(l / 3) + 2 * step(l, 25, 50);
   const FACTORY_RANGE = (l) => Math.round(14 + 0.4 * l);   // every building except barracks must sit inside a factory's range to work
-  const CITY_RADIUS = (l) => Math.min(16, 4 + Math.floor(l / 3));
-  const PLANT_RANGE = (l) => Math.round(20 + 0.5 * l);
-  const FARM_R = (l) => 3 + Math.floor(l / 6);
-  const BANK_PCT = (l) => 0.08 + 0.005 * l;
-  const LAB_RATE = (l) => +(0.5 + 0.1 * l).toFixed(1);
-  const HEAL_R = (l) => 4 + Math.floor(l / 4);
-  const MON_BONUS = (l) => Math.min(0.5, 0.15 + 0.01 * l), MON_INC = (l) => 50 + 12 * l;
+  const CITY_RADIUS = (l) => Math.min(24, 4 + Math.floor(l / 3) + 2 * step(l, 25, 50, 100));
+  const PLANT_RANGE = (l) => Math.round((20 + 0.5 * l) * (1 + 0.25 * step(l, 10, 25, 50)));
+  const FARM_R = (l) => 3 + Math.floor(l / 6) + step(l, 25, 50);
+  const BANK_PCT = (l) => 0.08 + 0.005 * l + 0.05 * step(l, 10, 25, 50);
+  const LAB_RATE = (l) => +((0.5 + 0.1 * l) * (1 + 0.25 * step(l, 10, 25, 50, 100))).toFixed(1);
+  const HEAL_R = (l) => 4 + Math.floor(l / 4) + 2 * step(l, 25, 50);
+  const MON_BONUS = (l) => Math.min(0.7, 0.15 + 0.01 * l + 0.05 * step(l, 25, 50)), MON_INC = (l) => Math.round((50 + 12 * l) * (1 + 0.25 * step(l, 10, 25, 50)));
   const SPY_R = (l) => 25 + l;
   const FORT_R = (l) => 3 + Math.floor(l / 8), FORT_BONUS = (l) => 0.4 + 0.02 * l;
-  const BUNKER_R = (l) => 3 + Math.floor(l / 8), BUNKER_SHIELD = (l) => Math.min(0.9, 0.35 + 0.012 * l);
-  const AIR_R = (l) => 6 + Math.floor(l * 0.3);
+  const BUNKER_R = (l) => 3 + Math.floor(l / 8), BUNKER_SHIELD = (l) => Math.min(0.9, 0.35 + 0.012 * l + 0.04 * step(l, 10, 25, 50));
+  const AIR_R = (l) => 6 + Math.floor(l * 0.3) + 3 * step(l, 10, 25, 50);
   const BIG_BUILDS = new Set(['factory', 'city', 'spy', 'silo', 'lab']);   // late-game money sinks: up to level 100, everything else stops at 50
   const maxLevel = (t) => (BIG_BUILDS.has(t) ? 100 : 50);
   // The next level that changes something big, shown in the building panel.
   const MILESTONES = {
     factory: [[10, '+25% income'], [25, '+25% income'], [50, '+25% income'], [100, '+25% income']],
     silo: [[2, 'toxic bombs'], [4, 'firestorm bombs'], [6, 'dirty bombs'], [8, 'nukes'], [15, 'MIRV warheads'], [30, 'spy bombs'], [40, 'spy warheads']],
+    port: [[25, '+2 ship berths'], [50, '+2 ship berths']],
+    city: [[25, 'wider reach'], [50, 'wider reach'], [100, 'wider reach']],
+    plant: [[10, '+25% range'], [25, '+25% range'], [50, '+25% range']],
+    farm: [[25, 'wider reach'], [50, 'wider reach']],
+    bank: [[10, '+5% income'], [25, '+5% income'], [50, '+5% income']],
+    lab: [[10, '+25% research'], [25, '+25% research'], [50, '+25% research'], [100, '+25% research']],
+    hospital: [[25, 'wider reach'], [50, 'wider reach']],
+    monument: [[10, '+25% income'], [25, '+5% diplomacy, +25% income'], [50, '+5% diplomacy, +25% income']],
+    bunker: [[10, 'stronger shield'], [25, 'stronger shield'], [50, 'stronger shield']],
+    airbase: [[10, 'longer reach'], [25, 'longer reach'], [50, 'longer reach']],
     radar: [[10, 'stronger shots'], [25, 'stronger shots'], [50, 'sees stealth weapons']],
     sradar: [[7, 'finds bunkers'], [14, 'finds silos'], [21, 'finds airbases'], [28, 'finds spy HQs'], [35, 'finds spy radars'], [50, 'sees stealth weapons']],
     spy: [[1, 'intel: exact numbers'], [5, 'intel: building counts'], [10, 'intel: hidden buildings and wars'], [25, 'intel: strike plans'], [50, 'intel: full map'], [100, 'unlocks spy radars']],
@@ -2180,7 +2190,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (const s of n.blds) {
       if (s.type !== 'silo' || stockTotal(s) >= SILO_CAP(s.level)) continue;
       let t = 'missile';
-      if (nukesAllowed() && s.level >= BOMBS.mirv.siloLevel && rnd() < 0.05 + n.skill * 0.1) t = 'mirv';
+      if (nukesAllowed() && s.level >= BOMBS.spymissile.siloLevel && rnd() < 0.04 + n.skill * 0.06) t = 'spymissile';
+      else if (nukesAllowed() && s.level >= BOMBS.mirv.siloLevel && rnd() < 0.05 + n.skill * 0.1) t = 'mirv';
       else if (nukesAllowed() && s.level >= BOMBS.nuke.siloLevel && rnd() < 0.12 + n.skill * 0.2) t = 'nuke';
       else if (toxicAllowed() && s.level >= BOMBS.dirty.siloLevel && rnd() < 0.12) t = 'dirty';
       else if (toxicAllowed() && s.level >= BOMBS.firestorm.siloLevel && rnd() < 0.2) t = 'firestorm';
@@ -2262,7 +2273,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     }
     if (idx === null) idx = pick(target.tileList);
     if (idx === undefined || idx === null) return;
-    const order = target.tiles > 80 || rnd() < 0.3 ? ['mirv', 'nuke', 'dirty', 'firestorm', 'toxic', 'missile'] : ['toxic', 'firestorm', 'missile', 'dirty', 'nuke'];
+    const order = target.tiles > 80 || rnd() < 0.3 ? ['mirv', 'nuke', 'spymissile', 'dirty', 'firestorm', 'toxic', 'missile'] : ['toxic', 'firestorm', 'missile', 'dirty', 'nuke'];
     for (const type of order) {
       const silo = silos.find((s) => s.stock[type] && siloReach(s, idx, type));
       if (silo) {
@@ -3260,7 +3271,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (let i = 0; i < N; i++) { const r = regions[i]; own[i] = r.owner ? index.get(r.owner) : 0; pop[i] = r.population; tox[i] = r.toxic; }
     return {
       v: 4, cfg: state.cfg, history, shotDown: state.shotDown, firedBomb: state.firedBomb, questDone: state.questDone, diff: state.diff, startMonth: state.startMonth, alliances: [...alliances], runNo: state.runNo, month: state.month, year: state.year, gameClock, nextUid, wonShown: state.wonShown, won90: state.won90, tuneK: state.tuneK, tuneLogged: state.tuneLogged, playerCalm: state.playerCalm || 0,
-      nations: ids.map((id) => { const n = nations[id]; return { id, name: n.name, color: n.color, isPlayer: n.isPlayer, style: n.style, skill: n.skill, aggression: n.aggression, alive: n.alive, buys: n.buys, gold: n.gold, tech: n.tech, peak: n.peak, lastHitBy: n.lastHitBy, milestone: n.milestone, offerCd: n.offerCd, allyCd: n.allyCd, giftCd: n.giftCd, health: n.health, team: n.team, coupons: n.coupons }; }),
+      nations: ids.map((id) => { const n = nations[id]; return { id, name: n.name, color: n.color, isPlayer: n.isPlayer, style: n.style, skill: n.skill, aggression: n.aggression, alive: n.alive, buys: n.buys, gold: n.gold, tech: n.tech, peak: n.peak, lastHitBy: n.lastHitBy, milestone: n.milestone, offerCd: n.offerCd, allyCd: n.allyCd, giftCd: n.giftCd, health: n.health, team: n.team, coupons: n.coupons, intel: n.intel ? [...n.intel] : undefined, spyAt: n.spyAt }; }),
       own: u8ToB64(own), pop: u8ToB64(new Uint8Array(pop.buffer)), tox: u8ToB64(tox),
       buildings: buildings.map((b) => ({ uid: b.uid, type: b.type, level: b.level, owner: b.owner, idx: b.idx, stock: b.stock, golden: b.golden || 0 })),
       found: [...found], spyScans, spyFound,
@@ -3293,6 +3304,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     resetWorld();
     nations = {};
     for (const nd of d.nations) nations[nd.id] = Object.assign(makeNation(nd.id, nd.name, nd.color, nd.isPlayer, null), nd);
+    for (const n of Object.values(nations)) n.intel = Array.isArray(n.intel) ? new Set(n.intel) : undefined;
     const ids = d.nations.map((x) => x.id);
     const own = b64ToU8(d.own), pop = new Uint16Array(b64ToU8(d.pop).buffer), tox = b64ToU8(d.tox);
     for (let i = 0; i < N; i++) { const r = regions[i]; r.owner = own[i] ? ids[own[i] - 1] : null; r.population = pop[i]; r.toxic = tox[i]; }
