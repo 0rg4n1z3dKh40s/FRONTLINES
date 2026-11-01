@@ -559,7 +559,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       <dt>Start</dt><dd>Tap any land and press <b>Found nation here</b>. 49 rival nations appear around the world.</dd>
       <dt>Grow</dt><dd>Tap anywhere on a nation to see everything about it: people, land, buildings, bombs, wars and allies. Tap your land and hold <b>Expand</b>, or tap free land on your border and hold <b>Claim</b>. Tap a neighbour's land, choose how many of your people to send (1% to 100%), and press <b>Invade</b>: your troops sweep in as a wave and their number counts down as they fight. It's all about population: each sector costs as many troops as the people defending it, so if you send more troops than they have people, you win. A nation you invade doesn't automatically invade back (only sometimes does), but its people still defend, so a bigger nation just takes your troops longer to get through. Sending 100% leaves your own land empty. Every purchase costs a little more than the last one, for every nation.</dd>
       <dt>Build</dt><dd>Pick a building from the bottom bar, then tap your land to place it. Tap it later to upgrade it.
-        Press <b>Build</b> (or B) to see everything: factories, power plants, farms, banks, cities, barracks, forts, bunkers, silos, radars, airbases, spy HQs, ports, research labs, hospitals and monuments. <b>Factories</b> and <b>power plants</b> power everything in their ring: anything marked <b>Needs power</b> does nothing outside one. <b>Barracks</b>, <b>forts</b> and <b>farms</b> work anywhere. A <b>City</b> is expensive but doubles your income and almost doubles the people around it.</dd>
+        Press <b>Build</b> (or B) to see everything: factories, power plants, farms, banks, cities, barracks, forts, bunkers, silos, radars, airbases, spy HQs, ports, research labs, hospitals and monuments. <b>Factories</b> and <b>power plants</b> power everything in their ring: anything marked <b>Needs power</b> does nothing outside one. <b>Barracks</b>, <b>forts</b> and <b>farms</b> work anywhere. A <b>City</b> is expensive but doubles your income and doubles the people around it.</dd>
       <dt>Bombs</dt><dd>Buy bombs at a silo: missiles at level 1, toxic bombs at level 2, nukes at level 3. Each bomb has its own range, and upgrading adds more. To fire, tap enemy land and pick a bomb that can reach. A bomb shot down by a radar or ship does no damage at all. Bombs that land leave toxic fallout that kills people and blocks land until it fades, or until you pay for a cleanup.</dd>
       <dt>Sea</dt><dd><b>Scout ships</b> carry a small radar that spots and shoots down some bombs. <b>Transports</b> let you claim or invade any coast they are parked next to. Tap a ship, then tap the ocean to sail.</dd>
       <dt>Peace</dt><dd>Attacking a nation starts a war. Tap their land to <b>offer a ceasefire</b>; nations that are losing usually say yes. Wars also end on their own after a long quiet spell.</dd>
@@ -655,7 +655,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     silo:     { name: 'Missile Silo', cost: 800, tech: 110, cat: 'mil', info: (l) => `Holds ${SILO_CAP[l]} bombs · ${['', 'missiles', 'missiles and toxic bombs', 'missiles, toxic bombs and nukes'][l]} · range ×${(1 + 0.3 * (l - 1)).toFixed(1)}` },
     radar:    { name: 'Radar',        cost: 700, tech: 110, cat: 'mil', info: (l) => `${Math.round(RADAR_CHANCE[l] * 100)}% chance to shoot down bombs within ${RADAR_RANGE[l]} sectors` },
     port:     { name: 'Port',         cost: 600, tech: 100, coastal: true, cat: 'other', info: (l) => `Docks up to ${PORT_SHIPS[l]} ship${PORT_SHIPS[l] > 1 ? 's' : ''}` },
-    city:     { name: 'City',         cost: 5000, tech: 100, step: 0.6, cat: 'eco', radius: CITY_RADIUS, ring: '165,180,252', info: (l) => `Doubles your base income · people grow to almost twice as many within ${CITY_RADIUS[l]} sectors` },
+    city:     { name: 'City',         cost: 5000, tech: 100, step: 0.6, cat: 'eco', radius: CITY_RADIUS, ring: '165,180,252', info: (l) => `Doubles your base income · people double within ${CITY_RADIUS[l]} sectors` },
     plant:    { name: 'Power Plant',  cost: 900,  tech: 100, free: true, cat: 'eco', radius: PLANT_RANGE, ring: '226,181,75', info: (l) => `Powers buildings within ${PLANT_RANGE[l]} sectors · earns nothing itself` },
     farm:     { name: 'Farm',         cost: 300,  tech: 100, free: true, cat: 'eco', radius: FARM_R, ring: '134,239,172', info: (l) => `People grow to 30% more within ${FARM_R[l]} sectors` },
     bank:     { name: 'Bank',         cost: 1500, tech: 105, cat: 'eco', info: (l) => `+${Math.round(BANK_PCT[l] * 100)}% income (banks add up to +60%)` },
@@ -1792,9 +1792,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         if (r.owner) r.population = Math.round(r.population * (healCover[r.id] ? 0.94 : 0.88));
         if (r.toxic === 0) toxicDirty = true;
       } else if (r.owner) {
-        const cap = POP_CAP * (cityBoost[r.id] ? 1.9 : 1) * (farmCover[r.id] ? 1.3 : 1);
-        const rate = (cityBoost[r.id] ? 1.035 : 1.02) + (healCover[r.id] ? 0.01 : 0);
-        r.population = Math.min(cap, Math.round(r.population * rate + 15));
+        const cap = POP_CAP * (cityBoost[r.id] ? 2 : 1) * (farmCover[r.id] ? 1.3 : 1);
+        const rate = (cityBoost[r.id] ? 1.06 : 1.02) + (healCover[r.id] ? 0.01 : 0);
+        r.population = Math.min(cap, Math.round(r.population * rate + (cityBoost[r.id] ? 40 : 15)));
       }
     }
     tally();
@@ -2533,7 +2533,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     medal('first_build');
     sfxPlay('build'); pulses.push({ idx, t0: gameClock });
     toast(b.on ? `${B.name} built.` : `${B.name} built, but it has no power. Build a factory within range.`, b.on ? 'good' : 'bad');
-    if (type === 'city') { for (const i of p.tileList) if (cityBoost[i]) regions[i].population = Math.min(POP_CAP * 1.9, Math.round(regions[i].population * 1.5)); medal('city1'); trigger('city'); }
+    if (type === 'city') { for (const i of p.tileList) if (cityBoost[i]) regions[i].population = Math.min(POP_CAP * 2, Math.round(regions[i].population * 2)); medal('city1'); trigger('city'); }
     afterChange();
     return true;
   }
