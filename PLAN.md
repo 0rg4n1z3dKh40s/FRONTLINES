@@ -12,11 +12,13 @@ Built as planned. Notes from the build: music defaults to "Generated" (switch to
 - **Nukes** keep the existing flash and shake and get a rumble sound, a stronger flash and a short slow-motion beat.
 - A short pulse on the sector when you build or upgrade.
 
-## Phase 2: AI behaviour and difficulty
-- **Less bomb spam.** In `aiStrike`, at most one AI strike per month across the whole world. Each AI has a long cooldown. Bombs cost an AI more each time it fires (price climbs over a few shots, then recovers slowly). Applies to every difficulty, including extreme, which just gets a shorter cooldown.
-- **Easy mode barely retaliates.** In `aiHitBack`, easy-mode AIs do nothing when attacked, except a 10% chance to respond. The chance drops as the AI gets bigger.
-- **Optional win at 90%.** At 90% of the land, show "You win" with **Continue** or **Finish**. Continue keeps playing toward `WIN_SHARE` (98%). Change is in `checkEnd`.
-- **Survival chance on attacks.** Every attack preview shows a live 0–100% chance of winning, with both sides' population. Shown always, with or without the assistant. Built on `estimateSectors`.
+## Phase 2: AI behaviour and difficulty (done)
+Built as planned. Notes from the build: all numbers are first guesses, to tune in play. Not yet seen in play: AI bombs, the invade preview and the 90% win screen.
+
+- **Less bomb spam.** In `aiStrike`, at most one AI strike per month across the whole world (`lastAiStrike`). Each AI waits a cooldown after firing, set per difficulty by `strikeCd` in `DIFFS` (Easy 30 months, Medium 20, Hard 12, Extreme 6, each randomised by ±20%). Each shot adds "heat" to the AI, raising its bomb prices by 45% per heat (`AI_HEAT_COST`). Heat is capped at 4 and fades at 1 per 12 months (`aiHeat`). Only AIs pay it; the player's prices are unchanged.
+- **Easy mode barely retaliates.** The roll lives in `startAttack` (which `aiHitBack` reads), not in `aiHitBack` itself. On Easy an invaded AI answers back 10% of the time, shrinking to 0 as it nears 30% of the land. Other difficulties keep the old odds.
+- **Optional win at 90%.** At 90% of the land (`WIN_EARLY`) `checkEnd` shows "You win!" with **Continue** or **Finish** (the Finish button is the main-menu button, relabelled). Continue plays on toward `WIN_SHARE` (98%) or until no rivals are left, then the full victory screen shows. The win medal and quest trigger fire once. `won90` is saved with the game.
+- **Survival chance on attacks.** The invade panel shows "N troops · X% chance to win" and both sides' population, always, with or without the assistant. It uses a new `survivalChance`, not `estimateSectors`: your troops against the people in the 12 enemy sectors nearest the target. Even strength is 50%, double is about 90%.
 
 ## Phase 3: More upgrades and bombs
 - **Many levels, few real unlocks.** A newly built building is level 0. The first upgrade makes it level 1, and so on. Every level gives a small steady bump (a bit more money, a bit more population). Only milestone levels add real new abilities, for example 2–4 of them by level 10 for something like a Spy HQ, with the big ones further out. Costs rise steeply, so the per-level arrays (`FACTORY_INCOME`, `RADAR_RANGE`, etc.) become formulas plus a short milestone table per building. `upgradeBuilding` and the level cap (currently 3) change accordingly.
