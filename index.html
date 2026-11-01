@@ -2177,7 +2177,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (const s of n.blds) {
       if (s.type !== 'silo' || stockTotal(s) >= SILO_CAP(s.level)) continue;
       let t = 'missile';
-      if (nukesAllowed() && s.level >= BOMBS.nuke.siloLevel && rnd() < 0.12 + n.skill * 0.2) t = 'nuke';
+      if (nukesAllowed() && s.level >= BOMBS.mirv.siloLevel && rnd() < 0.05 + n.skill * 0.1) t = 'mirv';
+      else if (nukesAllowed() && s.level >= BOMBS.nuke.siloLevel && rnd() < 0.12 + n.skill * 0.2) t = 'nuke';
       else if (toxicAllowed() && s.level >= BOMBS.dirty.siloLevel && rnd() < 0.12) t = 'dirty';
       else if (toxicAllowed() && s.level >= BOMBS.firestorm.siloLevel && rnd() < 0.2) t = 'firestorm';
       else if (toxicAllowed() && s.level >= BOMBS.toxic.siloLevel && rnd() < 0.3) t = 'toxic';
@@ -2231,7 +2232,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     }
     if (idx === null) idx = pick(target.tileList);
     if (idx === undefined || idx === null) return;
-    const order = target.tiles > 80 || rnd() < 0.3 ? ['nuke', 'dirty', 'firestorm', 'toxic', 'missile'] : ['toxic', 'firestorm', 'missile', 'dirty', 'nuke'];
+    const order = target.tiles > 80 || rnd() < 0.3 ? ['mirv', 'nuke', 'dirty', 'firestorm', 'toxic', 'missile'] : ['toxic', 'firestorm', 'missile', 'dirty', 'nuke'];
     for (const type of order) {
       const silo = silos.find((s) => s.stock[type] && siloReach(s, idx, type));
       if (silo) {
@@ -2372,6 +2373,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       desc: 'Every nation starts with full tech and lots of money. Goal: shoot down 5 bombs.' },
     { id: 'coldwar',  name: 'Cold War',        diff: 'hard', rivals: 29, teams: 2, myTeam: 1, goal: { win: true },
       desc: 'Two giant teams of 15. Goal: wipe out the other team.' },
+    { id: 'shadow',   name: 'Shadow War',     diff: 'medium', tech: 120, money: 4000, goal: { spyFound: 6 },
+      desc: 'Rivals hide their silos and radars. Build a Spy HQ and a port, then find 6 hidden buildings.' },
     { id: 'underdog', name: 'Underdog',        diff: 'medium', myHealth: 0.8, aiHealth: 1.5, goal: { land: 25 },
       desc: 'Rivals are tougher than you. Goal: own 25% of the world anyway.' },
   ];
@@ -2415,6 +2418,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const p = nations[PLAYER], g = q.goal;
     if (g.land) return { q, done: p.tiles / landCount * 100 >= g.land, text: `${(p.tiles / landCount * 100).toFixed(1)}% of ${g.land}%` };
     if (g.cities) return { q, done: p.cities >= g.cities, text: `${p.cities} of ${g.cities} cities` };
+    if (g.spyFound) return { q, done: spyFound >= g.spyFound, text: `${spyFound} of ${g.spyFound} hidden buildings found` };
     if (g.shotDown) return { q, done: state.shotDown >= g.shotDown, text: `${state.shotDown} of ${g.shotDown} shot down` };
     if (g.win) return { q, done: state.over && p.alive, text: 'Defeat the other team' };
     return null;
