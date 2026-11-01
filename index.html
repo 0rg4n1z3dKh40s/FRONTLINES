@@ -4160,7 +4160,10 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     else if (e.key === '-') zoomAt(W / 2, H / 2, camera.s / 1.25);
   });
   window.addEventListener('resize', resize);
-  document.addEventListener('visibilitychange', () => { if (document.hidden && running()) saveRun(); });
+  // Pause the moment the player looks away: switching to another app (blur) or tab (hidden).
+  const autoPause = () => { if (running()) pauseGame(); };
+  window.addEventListener('blur', autoPause);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) autoPause(); });
   const topbar = $('topbar');
   const syncHudTop = () => document.documentElement.style.setProperty('--hud-top', Math.round(topbar.getBoundingClientRect().bottom) + 'px');
   if ('ResizeObserver' in window) new ResizeObserver(syncHudTop).observe(topbar);
