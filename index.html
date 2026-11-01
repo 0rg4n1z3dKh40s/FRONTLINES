@@ -2041,6 +2041,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   // Every AI earns by the same rules; skill only changes how well it spends.
   function aiTurn(n) {
     aiEconomy(n);
+    aiSpy(n);
     aiStrike(n);
     aiHitBack(n);
     const moves = 1 + (rnd() < n.skill ? 1 : 0) + (n.skill > 0.7 && rnd() < 0.5 ? 1 : 0);
@@ -2161,6 +2162,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     else if (!n.frontier.length && !cnt('port') && n.tiles > 30) want = 'port';
     else if (atWar && cnt('barracks') < 1 + Math.floor(n.tiles / 150)) want = 'barracks';
     else if (atWar && cnt('fort') < 1 + Math.floor(n.tiles / 120) && rnd() < 0.3 + n.skill * 0.4) want = 'fort';
+    if (atWar && !cnt('spy') && n.tech >= BUILD.spy.tech && n.tiles > 50 && n.skill > 0.4 && rnd() < 0.15) want = 'spy';
+    else if (atWar && cnt('spy') && !cnt('airbase') && n.tech >= BUILD.airbase.tech && rnd() < 0.2) want = 'airbase';
     if (atWar && bombsAllowed() && n.tech >= BUILD.silo.tech && cnt('silo') < 1 + Math.floor(n.tiles / 200) && rnd() < 0.25 + n.aggression * 0.6) want = 'silo';
     const threatened = enemiesOf(n).some((e) => e.blds.some((b) => b.type === 'silo'));
     if (threatened && n.tech >= BUILD.radar.tech && cnt('radar') < 1 + Math.floor(n.tiles / 160) && rnd() < 0.3 + n.skill * 0.5) want = 'radar';
@@ -2212,6 +2215,33 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     return best;
   }
   let lastAiStrike = -1;   // month of the last AI bomb anywhere: at most one a month in the whole world
+  // AI spies work in the abstract: a plane (from an airbase) or a ship (from a port) scouts a rival's land, and the hidden buildings
+  // it finds are remembered in n.intel. Only intel-known silos and radars are picked as strike targets.
+  function aiSpy(n) {
+    if ((n.spyAt || 0) > monthIndex() || rnd() > 0.5) return;
+    const hq = spyHQLevel(n);
+    if (hq < 0) return;
+    const enemies = enemiesOf(n).filter((e) => e.blds.some((b) => HIDDEN_ORDER.includes(b.type)));
+    if (!enemies.length) return;
+    const target = pick(enemies);
+    const base = n.blds.find((b) => b.type === 'airbase' && b.on), port = n.blds.find((b) => b.type === 'port' && b.on);
+    const hidden = target.blds.filter((b) => HIDDEN_ORDER.includes(b.type));
+    const aim = pick(hidden);
+    let cost = 0, R = 0, how = '';
+    if (base && tileDist(base.idx, aim.idx) <= 3 * AIR_R(base.level) + 20) { cost = planeCost(n); R = PLANE_R; how = 'plane'; }
+    else if (port) { cost = shipCost(n, 'spy'); R = SHIP_SCAN_R; how = 'ship'; }
+    if (!cost || n.gold < cost * 2) return;
+    n.gold -= cost; bump(n, how === 'plane' ? 'plane' : 'ship:spy');
+    n.spyAt = monthIndex() + Math.round(8 * (1.2 - n.skill * 0.5) * (0.8 + rnd() * 0.4));
+    const ar = regions[aim.idx];
+    n.intel = n.intel || new Set();
+    let got = 0;
+    for (const b of hidden) {
+      const r = regions[b.idx];
+      if (Math.hypot(r.col - ar.col, r.row - ar.row) <= R + (hq >= 10 ? 3 : 0)) { if (!n.intel.has(b.uid)) got++; n.intel.add(b.uid); }
+    }
+    if (got && target.isPlayer && spyHQLevel(target) >= 10) news('info', `${tag(n)}'s spy ${how} scouted ${tag(target)}.`, true);
+  }
   function aiStrike(n) {
     if (!bombsAllowed() || lastAiStrike === monthIndex() || (n.strikeAt || 0) > monthIndex()) return;
     // Bombs only fly in wars that have dragged on a while, and less often on easier modes.
@@ -2227,7 +2257,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const target = rnd() < n.skill ? enemies.reduce((a, b) => (power(b) * b.tiles > power(a) * a.tiles ? b : a)) : pick(enemies);
     let idx = null;
     if (rnd() < n.skill) {
-      const juicy = target.blds.filter((b) => b.type === 'silo' || b.type === 'radar' || b.type === 'factory');
+      const juicy = target.blds.filter((b) => (b.type === 'silo' || b.type === 'radar' || b.type === 'factory') && (!HIDDEN_ORDER.includes(b.type) || (n.intel && n.intel.has(b.uid))));
       if (juicy.length) idx = pick(juicy).idx;
     }
     if (idx === null) idx = pick(target.tileList);
