@@ -72,6 +72,37 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 }
 .topbtn.active { color: var(--accent); border-color: rgba(226, 181, 75, 0.45); }
 
+/* Phase 5: flag, update button, coach, chests */
+#flagwrap { flex-direction: row; align-items: center; gap: 6px; }
+#myflag { position: relative; width: 36px; height: 24px; border-radius: 3px; overflow: hidden; border: 2px solid var(--line); background: #818cf8; flex: none; }
+#myflag img, #myflag video { width: 100%; height: 100%; object-fit: cover; display: block; }
+#myflag.f-gold { border-color: #e2b54b; box-shadow: 0 0 6px rgba(226,181,75,.6); }
+#myflag.f-red { border-color: #ec5a50; box-shadow: 0 0 6px rgba(236,90,80,.6); }
+#myflag.f-blue { border-color: #5aa9ec; box-shadow: 0 0 6px rgba(90,169,236,.6); }
+#myflag.f-mono { border-color: #e4ebf3; border-style: double; border-width: 4px; }
+#myflag.f-rainbow { border: 2px solid transparent; background-clip: padding-box; box-shadow: 0 0 0 2px #ec5a50, 0 0 0 4px #e2b54b, 0 0 0 6px #45c486; }
+#myglyph { font: 700 15px var(--display); color: var(--accent); }
+#update-btn { position: fixed; z-index: 30; left: 50%; top: 0; transform: translate(-50%, -120%); padding: 8px 14px; border-radius: 0 0 12px 12px; border: 1px solid rgba(226,181,75,.6); border-top: 0; background: var(--panel); color: var(--accent); font: 700 11px var(--display); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: transform .5s cubic-bezier(.2,.9,.3,1.2); }
+#update-btn.show { transform: translate(-50%, 0); }
+#coach { position: fixed; z-index: 12; left: var(--gutter-l); bottom: 90px; max-width: 300px; padding: 12px 14px; display: grid; gap: 6px; }
+#coach b { font: 700 12px var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+#coach p { margin: 0; font-size: 13px; line-height: 1.45; }
+#coach .btn { width: auto; padding: 6px 10px; font-size: 10px; justify-self: start; }
+.chests { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.chest { padding: 14px 8px; border: 1px solid rgba(226,181,75,.5); border-radius: 10px; background: rgba(226,181,75,.08); color: var(--fg); cursor: pointer; font: 700 11px var(--display); letter-spacing: .06em; text-transform: uppercase; display: grid; gap: 6px; justify-items: center; }
+.chest .box { font-size: 34px; line-height: 1; }
+.chest.shake .box { animation: chestshake .6s ease-in-out; }
+.chest.opened { cursor: default; background: rgba(255,255,255,.04); border-color: var(--line); }
+.chest.opened .box { animation: chestpop .5s ease-out; }
+.chest small { font: 12px var(--body); text-transform: none; letter-spacing: 0; color: var(--muted); }
+@keyframes chestshake { 0%,100% { transform: rotate(0) } 15% { transform: rotate(-12deg) scale(1.1) } 35% { transform: rotate(12deg) scale(1.15) } 55% { transform: rotate(-9deg) scale(1.2) } 75% { transform: rotate(9deg) scale(1.25) } }
+@keyframes chestpop { 0% { transform: scale(.3); opacity: 0 } 70% { transform: scale(1.4) } 100% { transform: scale(1); opacity: 1 } }
+.badge-g { font-size: 26px; line-height: 1.1; }
+.medal.pick { cursor: pointer; }
+.medal.pick.sel { border-color: var(--accent); }
+.topbtn[hidden], #coach[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .chest.shake .box, .chest.opened .box { animation: none; } #update-btn { transition: none; } }
+
 /* Notifications */
 #toasts {
   position: fixed; z-index: 13; pointer-events: none;
@@ -359,6 +390,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
 
 <div id="topbar">
   <div class="stats glass">
+    <div class="stat" id="flagwrap"><div id="myflag" title="Your flag"></div><span id="myglyph"></span></div>
     <div class="stat"><span class="k">Money</span><span class="v gold"><span id="s-gold">$0</span><small id="s-income"></small></span></div>
     <div class="stat"><span class="k">Population</span><span class="v" id="s-pop">0</span></div>
     <div class="stat"><span class="k">Tech</span><span class="v" id="s-tech">100%</span></div>
@@ -366,6 +398,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   </div>
   <div class="topbtns">
     <button class="topbtn" id="btn-music" title="Music on (M)" aria-label="Music on (M)"><svg class="i" viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/><path class="slash" d="M3 3l18 18" style="display:none"/></svg></button>
+    <button class="topbtn" id="btn-assist" title="Assistant on" aria-label="Assistant on"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v3M5 9h14v9H5zM9 13h.01M15 13h.01M9 21h6"/></svg></button>
+    <button class="topbtn" id="btn-chest" title="You have a chest to open" aria-label="Open chests" hidden><svg class="i" viewBox="0 0 24 24"><path d="M3 10h18v10H3zM3 10a9 6 0 0 1 18 0M12 10v4"/></svg></button>
     <button class="topbtn" id="btn-overview" title="Overview" aria-label="Overview"><svg class="i" viewBox="0 0 24 24"><path d="M4 20V11M10 20V5M16 20v-6M21 20H3"/></svg></button>
     <button class="topbtn" id="btn-pause" title="Pause (Esc)" aria-label="Pause"><svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
   </div>
@@ -471,7 +505,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   <div class="modal glass wide">
     <h2>Quests</h2>
     <div class="seg" role="group" aria-label="Quests sections">
-      <button data-tab="quests">Quests</button><button data-tab="medals">Medals</button><button data-tab="board">Leaderboard</button><button data-tab="custom">My games</button>
+      <button data-tab="quests">Quests</button><button data-tab="medals">Medals</button><button data-tab="chests">Chests</button><button data-tab="badges">Badges</button><button data-tab="board">Leaderboard</button><button data-tab="custom">My games</button>
     </div>
     <div id="quests-body"></div>
     <button class="btn ghost" id="quests-back">Back</button>
@@ -503,6 +537,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   </form>
 </div>
 
+<button id="update-btn" hidden>Update ready · tap to reload</button>
+<div id="coach" class="glass" hidden><b id="coach-title"></b><p id="coach-text"></p><button class="btn ghost" id="coach-skip" type="button">Skip tutorial</button></div>
+
 <div id="replays" class="overlay" hidden>
   <div class="modal glass wide">
     <h2>Replays</h2>
@@ -525,6 +562,13 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     <div class="field"><label for="set-vol">Music volume</label><input type="range" id="set-vol" min="0" max="100" step="5"></div>
     <div class="field"><span class="lbl">Sound effects</span>
       <div class="radios"><label><input type="checkbox" id="set-sfx"> Sound effects</label></div></div>
+    <div class="field"><span class="lbl">Background assistant</span>
+      <div class="radios"><label><input type="checkbox" id="set-assist"> Place basic buildings and make small upgrades for me</label></div>
+      <p class="note" style="margin:0">It never makes big purchases, never attacks, and keeps a gold reserve.</p></div>
+    <div class="field"><span class="lbl">Your flag</span>
+      <input type="file" id="set-flag" accept="image/*,video/*">
+      <p class="note" id="flag-msg" style="margin:0">An image or a short video. It stays on this device (small images also go with your cloud save). Erasing all data clears it.</p>
+      <button type="button" class="btn ghost" id="flag-clear">Remove flag</button></div>
     <button type="submit" class="btn gold">Save name</button>
     <div class="field"><span class="lbl">Account and cloud save</span>
       <p class="note" style="margin:0">Your player number: <b id="acct-num">-</b>. While you're signed in with Google (a Gmail works too), everything is saved to this number automatically. If an update or a cleared browser logs you out, sign back in and your game comes back.</p>
@@ -568,6 +612,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       <dt>Win</dt><dd>Own 98% of the world, or defeat every rival. A nation that drops to 2% of its biggest size falls.</dd>
       <dt>Controls</dt><dd>Drag to move, pinch or scroll to zoom. Esc or P pauses and saves. M turns the music on or off.</dd>
     </dl>
+    <button class="btn ghost" id="howto-tut">Play the tutorial round</button>
     <button class="btn gold" id="howto-back">Got it</button>
   </div>
 </div>
@@ -1274,7 +1319,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (rnd() >= odds) return 'no';
     alliances.add(warKey(PLAYER, n.id));
     truces.delete(warKey(PLAYER, n.id));
-    news('peace', `${tag(p)} and ${tag(n)} formed an alliance.`, true);
+    chestEarn('first_alliance'); news('peace', `${tag(p)} and ${tag(n)} formed an alliance.`, true);
     sfxPlay('alliance');
     trigger('ally');
     medal('first_ally');
@@ -1498,7 +1543,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const mis = { uid: nextUid++, att: att.id, def: def.id, type, fx: fx0, fy: fy0, tx, ty, d, t0: gameClock, dur: 1800 + d * 30, tried: new Set(), detected: false };
     if (BOMBS[type].mirv) mis.count = mirvCount(def);
     missiles.push(mis);
-    if (att.id === LOCAL) medal('first_bomb');
+    if (att.id === LOCAL) { medal('first_bomb'); if (type === 'nuke') chestEarn('first_nuke'); if (type === 'mirv' || type === 'spymirv') chestEarn('first_mirv'); }
+    if (type === 'missile' && silo.golden > 0) { silo.golden--; mis.golden = true; }
     if (!BOMBS[type].stealth) news('bomb', `${tag(att)} launched ${bombPhrase(type)} at ${tag(def)}${BOMBS[type].mirv ? `: ${mis.count} warhead${mis.count > 1 ? 's' : ''}` : ''}.`, bigBomb(type) || att.isPlayer || def.isPlayer);
     return true;
   }
@@ -1600,13 +1646,14 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const att = nations[m.att], def = nations[m.def];
     spawnBoom('intercept', x, y, 0.7);
     const what = bombPhrase(m.type);
-    if (def.isPlayer) { toastTo(def.id, `Your defenses shot down ${what} from ${att.name}.`, 'good'); if (def.id === LOCAL) { state.shotDown++; bumpStat('shotDown'); trigger('intercept'); } }
+    if (def.isPlayer) { toastTo(def.id, `Your defenses shot down ${what} from ${att.name}.`, 'good'); if (def.id === LOCAL) { state.shotDown++; bumpStat('shotDown'); trigger('intercept'); chestEarn('first_intercept'); } }
     if (att.isPlayer) toastTo(att.id, `${def.name} shot down your ${BOMBS[m.type].name.toLowerCase()}.`, 'bad');
   }
   // A bomb that reaches its target explodes there.
   function detonate(m, x, y, intercepted, group) {
     const B0 = BOMBS[m.type], k = D().blast || 1, att = nations[m.att], def = nations[m.def];
-    const B = { ...B0, blast: B0.blast * k, flatten: B0.flatten * k, toxR: B0.toxR * k, kill: Math.min(0.95, B0.kill * k) };
+    const gk = m.golden ? 1.6 : 1;   // a golden missile hits much harder
+    const B = { ...B0, blast: B0.blast * k * gk, flatten: B0.flatten * k * gk, toxR: B0.toxR * k, kill: Math.min(0.95, B0.kill * k * (m.golden ? 1.4 : 1)) };
     const cc = Math.floor(x), cr = Math.floor(y);
     let killed = 0, flattened = 0;
     const lostList = [];   // silos and factories this blast destroyed
@@ -1941,9 +1988,12 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       if (n.isPlayer && n.income > 0) sfxPlay('coin');
     }
     checkCeasefires();
-    if (rnd() < 0.08) worldEvent();
-    aiDiplomacy();
-    for (const n of aliveNations()) if (!n.isPlayer) aiTurn(n);
+    if (!state.cfg.tutorial) {   // tutorial rivals follow the script instead
+      if (rnd() < 0.08) worldEvent();
+      aiDiplomacy();
+      for (const n of aliveNations()) if (!n.isPlayer) aiTurn(n);
+    }
+    assistTurn();
     if (state.month % 6 === 0) { captureFrame(); saveRun(); }
     afterChange();
   }
@@ -1984,6 +2034,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     checkProgress();
     checkEnd();
     updateHUD(); refreshContext(); refreshSheet(); refreshDock();
+    tutorialCheck();
   }
 
   /* ----- AI ----- */
@@ -2211,6 +2262,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       for (const b of buildings.slice()) if (b.owner === n.id) destroyBuilding(b);
       if (n.isPlayer) ships = ships.filter((s) => s.owner !== n.id);
       territoryDirty = true;
+      if (heir && heir.isPlayer) { bumpStat('conquered'); const c = (store.get('gh.stats') || {}).conquered || 0; if (c >= 10) chestEarn('conquered10'); if (c >= 25) chestEarn('conquered25'); }
       news('fall', heir ? `${tag(n)} was conquered by ${tag(heir)}.` : `${tag(n)} has collapsed.`, true);
       if (!n.isPlayer) trigger('nationFalls');
     }
@@ -2337,6 +2389,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (got[id]) return;
     got[id] = Date.now();
     store.set('gh.medals', got);
+    chestEarn(id);
     // Several medals at once (say, starting your first game) show one after another instead of piling up.
     const now = performance.now();
     medalAt = Math.max(now, medalAt + 1100);
@@ -2440,7 +2493,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   let lastMinorNews = 0;
   // Major news (anything involving you, nukes, nations falling) always shows; the rest is thinned out.
   function news(type, html, major) {
-    if (!state.started) return;
+    if (!state.started || state.cfg.tutorial) return;
     showNews(type, html, major, true);
   }
   function showNews(type, text, major, isHtml) {
@@ -2479,6 +2532,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (r.toxic) return fail("You can't start on toxic land.");
     if (r.owner) return fail('Someone already lives there. Pick free land.');
     foundNation(nations[PLAYER], idx);
+    applyRewards(nations[PLAYER]);
     tally();
     state.startMonth = monthIndex();
     spawnAIs();
@@ -2562,8 +2616,11 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (BOMB_TIER[type] >= 2 && !nukesAllowed()) return fail(D().nukeYears === null ? 'Nukes are off on Easy.' : 'Nukes are not available yet.');
     if (silo.level < B.siloLevel) return fail(`${B.name}s need a level ${B.siloLevel} silo.`);
     if (stockTotal(silo) >= SILO_CAP(silo.level)) return fail('This silo is full. Upgrade it to hold more.');
-    if (p.gold < bombCost(p, type)) return fail('Not enough money.');
-    p.gold -= bombCost(p, type); bump(p, 'bomb:' + type); silo.stock[type]++;
+    const cp = type === 'missile' && p.coupons ? (p.coupons.includes('golden') ? 'golden' : p.coupons.includes('free') ? 'free' : null) : null;
+    if (!cp && p.gold < bombCost(p, type)) return fail('Not enough money.');
+    if (cp) { p.coupons.splice(p.coupons.indexOf(cp), 1); if (cp === 'golden') silo.golden = (silo.golden || 0) + 1; toast(cp === 'golden' ? 'Golden missile from your chest!' : 'Free missile from your chest!', 'gold'); }
+    else { p.gold -= bombCost(p, type); bump(p, 'bomb:' + type); }
+    silo.stock[type]++;
     afterChange();
   }
   // Buys up to `times` levels in a row, as many as the money allows.
@@ -2575,6 +2632,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (let i = 0; i < times && b.level < maxLevel(b.type) && p.gold >= upgradeCost(p, b); i++) { p.gold -= upgradeCost(p, b); bump(p, 'up'); b.level++; }
     sfxPlay('upgrade'); pulses.push({ idx: b.idx, t0: gameClock });
     const hit = (MILESTONES[b.type] || []).find((m) => m[0] > from && m[0] <= b.level);
+    if (b.level >= 10) chestEarn('lvl10'); if (b.level >= 50) chestEarn('lvl50'); if (b.type === 'spy' && b.level >= 10) chestEarn('spy_hq10');
     toast(`${BUILD[b.type].name} upgraded to level ${b.level}.${hit ? ` Milestone: ${hit[1]}!` : ''}`, 'good');
     afterChange();
   }
@@ -2678,7 +2736,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     p.gold -= buildCost(p, type); bump(p, 'b:' + type);
     const b = placeBuilding(p, type, idx);
     tally();
-    medal('first_build');
+    medal('first_build'); if (type === 'sradar') chestEarn('sradar_built');
     sfxPlay('build'); pulses.push({ idx, t0: gameClock });
     toast(b.on ? `${B.name} built.` : `${B.name} built, but it has no power. Build a factory within range.`, b.on ? 'good' : 'bad');
     if (type === 'city') { for (const i of p.tileList) if (cityBoost[i]) regions[i].population = Math.min(POP_CAP * 2, Math.round(regions[i].population * 2)); medal('city1'); trigger('city'); }
@@ -2920,7 +2978,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const ratio = owner.pop / Math.max(1, p.pop);
     const rough = ratio < 0.5 ? 'much weaker than you' : ratio < 0.9 ? 'weaker than you' : ratio < 1.1 ? 'about as strong as you' : ratio < 2 ? 'stronger than you' : 'much stronger than you';
     let out = `<br><b>${owner.name}:</b> ${plural(owner.tiles, 'sector')} · ${rough}.`;
-    if (L < 1) return out + ' <i>${p.blds.some((b) => b.type === 'spy') ? 'Upgrade your Spy HQ' : 'Build a Spy HQ'} to learn more.</i>';
+    if (L < 1) return out + ` <i>${p.blds.some((b) => b.type === 'spy') ? 'Upgrade your Spy HQ' : 'Build a Spy HQ'} to learn more.</i>`;
     out += ` ${compact(owner.pop)} people · ${money(owner.gold)} gold · tech ${owner.tech}%.`;
     const troops = attacks.filter((a) => a.att === owner.id).reduce((s, a) => s + a.troops, 0);
     if (troops) out += ` ${compact(troops)} troops out fighting.`;
@@ -3168,9 +3226,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (let i = 0; i < N; i++) { const r = regions[i]; own[i] = r.owner ? index.get(r.owner) : 0; pop[i] = r.population; tox[i] = r.toxic; }
     return {
       v: 4, cfg: state.cfg, history, shotDown: state.shotDown, firedBomb: state.firedBomb, questDone: state.questDone, diff: state.diff, startMonth: state.startMonth, alliances: [...alliances], runNo: state.runNo, month: state.month, year: state.year, gameClock, nextUid, wonShown: state.wonShown, won90: state.won90, tuneK: state.tuneK, tuneLogged: state.tuneLogged, playerCalm: state.playerCalm || 0,
-      nations: ids.map((id) => { const n = nations[id]; return { id, name: n.name, color: n.color, isPlayer: n.isPlayer, style: n.style, skill: n.skill, aggression: n.aggression, alive: n.alive, buys: n.buys, gold: n.gold, tech: n.tech, peak: n.peak, lastHitBy: n.lastHitBy, milestone: n.milestone, offerCd: n.offerCd, allyCd: n.allyCd, giftCd: n.giftCd, health: n.health, team: n.team }; }),
+      nations: ids.map((id) => { const n = nations[id]; return { id, name: n.name, color: n.color, isPlayer: n.isPlayer, style: n.style, skill: n.skill, aggression: n.aggression, alive: n.alive, buys: n.buys, gold: n.gold, tech: n.tech, peak: n.peak, lastHitBy: n.lastHitBy, milestone: n.milestone, offerCd: n.offerCd, allyCd: n.allyCd, giftCd: n.giftCd, health: n.health, team: n.team, coupons: n.coupons }; }),
       own: u8ToB64(own), pop: u8ToB64(new Uint8Array(pop.buffer)), tox: u8ToB64(tox),
-      buildings: buildings.map((b) => ({ uid: b.uid, type: b.type, level: b.level, owner: b.owner, idx: b.idx, stock: b.stock })),
+      buildings: buildings.map((b) => ({ uid: b.uid, type: b.type, level: b.level, owner: b.owner, idx: b.idx, stock: b.stock, golden: b.golden || 0 })),
       found: [...found], spyScans, spyFound,
       ships: ships.map((s) => ({ uid: s.uid, owner: s.owner, kind: s.kind, port: s.port, x: s.x, y: s.y })),
       wars: [...wars.values()], truces: [...truces.entries()],
@@ -3179,6 +3237,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   let saveWarned = false;
   function saveRun() {
     if (!state.started) return false;
+    if (state.cfg.tutorial) return true;   // the tutorial is never saved
     if (!state.runId) state.runId = 'r' + Date.now().toString(36);
     const p = nations[PLAYER];
     const status = state.over ? (p.alive ? 'won' : 'lost') : 'playing';
@@ -3281,7 +3340,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     $('set-name').value = playerName();
     $('set-msg').textContent = '';
     $('code-msg').textContent = ''; $('code-box').value = '';
-    syncMusicButtons();
+    syncMusicButtons(); syncAssist();
     cloudRender();
     $('settings').hidden = false;
   }
@@ -3515,6 +3574,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const b = $('set-wipe');
     if (!wipeArmed) { wipeArmed = true; b.textContent = 'Tap again to erase everything'; setTimeout(() => { wipeArmed = false; b.textContent = 'Erase all saved data'; }, 3000); return; }
     try { Object.keys(localStorage).filter((k) => k.startsWith('gh.')).forEach((k) => localStorage.removeItem(k)); } catch (_) {}
+    assistSetting = null; flagPut(null).catch(() => {}); renderFlag(); syncChestBtn(); syncAssist();
     wipeArmed = false; b.textContent = 'Erase all saved data';
     $('set-name').value = playerName();
     $('set-msg').className = 'note'; $('set-msg').textContent = 'All runs, replays, medals and games were erased.' + (cloud.user ? ' Your cloud save is untouched: press Restore from cloud to bring it back.' : '');
@@ -3561,6 +3621,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         }
         body.append(h, grid);
       }
+    } else if (questTab === 'chests') { renderChests(body);
+    } else if (questTab === 'badges') { renderBadges(body);
     } else if (questTab === 'board') {
       const board = store.get('gh.board') || [];
       if (!board.length) { body.innerHTML = '<p class="empty">Finish a game to get on the leaderboard.</p>'; return; }
@@ -4113,7 +4175,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
           ctx.strokeStyle = `rgba(230,235,240,${f * 0.75})`; ctx.lineWidth = 1 + 1.6 * f;
           ctx.beginPath(); ctx.moveTo(pts[k - 1][0], pts[k - 1][1]); ctx.lineTo(pts[k][0], pts[k][1]); ctx.stroke();
         }
-        ctx.fillStyle = 'rgba(255,160,60,0.9)'; ctx.beginPath(); ctx.arc(hx, hy, 2.5 + Math.random() * 2, 0, 7); ctx.fill();
+        if (m.golden) { ctx.strokeStyle = 'rgba(255,214,102,0.9)'; ctx.lineWidth = 4; ctx.beginPath(); pts.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); }
+        ctx.fillStyle = m.golden ? 'rgba(255,214,102,0.95)' : 'rgba(255,160,60,0.9)'; ctx.beginPath(); ctx.arc(hx, hy, 2.5 + Math.random() * 2, 0, 7); ctx.fill();
         ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(hx, hy, 2.6, 0, 7); ctx.fill();
         ctx.strokeStyle = threat ? 'rgba(255,90,79,0.9)' : 'rgba(255,138,61,0.7)'; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.arc(tx, ty, tr, 0, 7); ctx.stroke();
@@ -4539,8 +4602,270 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     zoomAt(e.clientX, e.clientY, camera.s * Math.exp(clamp(-dy * 0.0015, -0.4, 0.4)));
   }, { passive: false });
 
+  /* ================= Phase 5: assistant, flag, updates, chests, badges, tutorial ================= */
+  /* ----- Background assistant: basic buildings and small upgrades only, with a gold reserve ----- */
+  let assistSetting = null;
+  const assistSet = () => (assistSetting = assistSetting || Object.assign({ on: true }, store.get('gh.assist') || {}));
+  function syncAssist() {
+    const on = assistSet().on, b = $('btn-assist');
+    b.classList.toggle('active', on);
+    b.title = b.ariaLabel = on ? 'Assistant on' : 'Assistant off';
+    const c = $('set-assist'); if (c) c.checked = on;
+  }
+  function setAssist(on) { assistSet().on = on; store.set('gh.assist', assistSet()); syncAssist(); toast(on ? 'Assistant on: it will place basic buildings and make small upgrades.' : 'Assistant off.', 'info'); }
+  const ASSIST_MAX_COST = 2500, ASSIST_MAX_LEVEL = 10;
+  function assistTurn() {
+    const p = nations[PLAYER];
+    if (!assistSet().on || !state.started || state.over || !p || !p.alive || state.cfg.tutorial || needsStart()) return;
+    const room = p.gold - Math.max(1500, p.income * 5);   // always keep a reserve
+    if (room < 150) return;
+    const cnt = (t) => p.blds.filter((b) => b.type === t).length;
+    const want = [];
+    if (!cnt('factory') || cnt('factory') < 1 + Math.floor(p.tiles / 60)) want.push('factory');
+    if (cnt('farm') < Math.floor(p.tiles / 30)) want.push('farm');
+    for (const t of want) {
+      const cost = buildCost(p, t);
+      if (cost > room || cost > ASSIST_MAX_COST || p.tech < BUILD[t].tech) continue;
+      const idx = aiBuildSpot(p, false, t);
+      if (idx !== null && placeAt(t, idx)) { toast(`Assistant built a ${BUILD[t].name}.`, 'info'); return; }
+    }
+    const up = p.blds.filter((b) => ['factory', 'farm'].includes(b.type) && b.level < ASSIST_MAX_LEVEL && upgradeCost(p, b) <= Math.min(room, ASSIST_MAX_COST)).sort((a, b) => a.level - b.level)[0];
+    if (up) { upgradeBuilding(up); toast(`Assistant upgraded a ${BUILD[up.type].name}.`, 'info'); }
+  }
+
+  /* ----- Custom flag: images are shrunk and kept in the save; videos stay in this browser's IndexedDB ----- */
+  const flagDB = () => new Promise((res, rej) => { const q = indexedDB.open('gh-flag', 1); q.onupgradeneeded = () => q.result.createObjectStore('f'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  async function flagPut(blob) { const db = await flagDB(); return new Promise((res) => { const t = db.transaction('f', 'readwrite'); if (blob) t.objectStore('f').put(blob, 'v'); else t.objectStore('f').clear(); t.oncomplete = () => res(true); t.onerror = () => res(false); }); }
+  async function flagGet() { const db = await flagDB(); return new Promise((res) => { const q = db.transaction('f').objectStore('f').get('v'); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); }
+  let flagUrl = null;
+  async function renderFlag() {
+    const box = $('myflag'), meta = store.get('gh.flag');
+    box.innerHTML = '';
+    box.style.background = PLAYER_DEF.color;
+    if (flagUrl) { URL.revokeObjectURL(flagUrl); flagUrl = null; }
+    try {
+      if (meta && meta.kind === 'img') { const i = new Image(); i.src = meta.data; i.alt = ''; box.appendChild(i); }
+      else if (meta && meta.kind === 'video') {
+        const blob = await flagGet();
+        if (blob) { flagUrl = URL.createObjectURL(blob); const v = document.createElement('video'); v.src = flagUrl; v.muted = v.loop = v.autoplay = v.playsInline = true; v.play().catch(() => {}); box.appendChild(v); }
+      }
+    } catch (_) {}
+    const fr = FRAMES.find((f) => f.id === store.get('gh.frame'));
+    box.className = fr ? 'f-' + fr.id : '';
+    const bd = BADGES.find((b) => b.id === store.get('gh.badge'));
+    $('myglyph').textContent = bd ? bd.glyph : '';
+    $('myglyph').title = bd ? bd.name : '';
+  }
+  async function setFlag(file) {
+    const msg = $('flag-msg');
+    if (!file) return;
+    try {
+      if (file.type.startsWith('video/')) {
+        if (file.size > 8e6) { msg.textContent = 'That video is over 8 MB. Pick a shorter one.'; return; }
+        await flagPut(file); store.set('gh.flag', { kind: 'video' });
+      } else if (file.type.startsWith('image/')) {
+        const bmp = await createImageBitmap(file);
+        const k = Math.min(1, 144 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+        c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+        await flagPut(null); store.set('gh.flag', { kind: 'img', data: c.toDataURL('image/jpeg', 0.8) });
+      } else { msg.textContent = 'Pick an image or a video.'; return; }
+      msg.textContent = 'Flag saved.';
+    } catch (_) { msg.textContent = "That file couldn't be used."; }
+    renderFlag();
+  }
+  async function clearFlag() { store.del('gh.flag'); try { await flagPut(null); } catch (_) {} $('flag-msg').textContent = 'Flag removed.'; renderFlag(); }
+
+  /* ----- Update check: the game fetches its own page and compares a hash, so the button only appears once the new version is really live ----- */
+  const upd = { hash: null };
+  function hashText(t) { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  async function checkUpdate() {
+    try {
+      const r = await fetch(location.pathname + '?_=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) return;
+      const h = hashText(await r.text());
+      if (upd.hash === null) upd.hash = h;
+      else if (h !== upd.hash) { $('update-btn').hidden = false; requestAnimationFrame(() => $('update-btn').classList.add('show')); }
+    } catch (_) {}
+  }
+  function applyUpdate() {
+    if (!confirm('A new version is ready. Reload now? Your game is saved and will come back paused.')) return;
+    if (state.started && !state.over) { saveRun(); if (state.runId) store.set('gh.resume', state.runId); }
+    location.reload();
+  }
+
+  /* ----- Chests: earned once each from "firsts" and milestones. Rewards are permanent (badges, flag frames, a tiny starting-gold bump) or for the next game only (gold, a free missile, a golden missile). ----- */
+  const FRAMES = [{ id: 'gold', name: 'Gold frame' }, { id: 'red', name: 'Red frame' }, { id: 'blue', name: 'Blue frame' }, { id: 'mono', name: 'Silver frame' }, { id: 'rainbow', name: 'Rainbow frame' }];
+  const GLYPHS = ['★', '☢', '⚓', '⚔', '♛', '✦', '⚑', '☄', '✪', '❖', '☼', '♞', '✈', '♜', '☘', '⚡', '✧', '❂'];
+  const CHEST_MEDALS = ['first_build', 'first_bomb', 'first_ship', 'city1', 'peacemaker', 'spy_scan', 'spy25', 'shield10', 'win_easy', 'win_medium', 'win_hard', 'win_extreme', 'clean', 'survivor', 'admiral', 'ally3', 'pacifist'];
+  const CHESTS = [
+    ...CHEST_MEDALS.map((id) => { const m = MEDALS.find((x) => x.id === id); return { id, name: m.name, desc: m.desc }; }),
+    { id: 'first_nuke', name: 'Mushroom Cloud', desc: 'Fire your first nuke.' },
+    { id: 'first_mirv', name: 'Many Hands', desc: 'Fire your first MIRV.' },
+    { id: 'first_alliance', name: 'Handshake', desc: 'Form your first alliance.' },
+    { id: 'first_intercept', name: 'Caught It', desc: 'Shoot down your first bomb.' },
+    { id: 'lvl10', name: 'Level Ten', desc: 'Upgrade any building to level 10.' },
+    { id: 'lvl50', name: 'Level Fifty', desc: 'Upgrade any building to level 50.' },
+    { id: 'spy_hq10', name: 'Master Spy', desc: 'Upgrade a Spy HQ to level 10.' },
+    { id: 'sradar_built', name: 'Deep Cover', desc: 'Build a spy radar.' },
+    { id: 'conquered10', name: 'Conqueror', desc: 'Conquer 10 nations (across all games).' },
+    { id: 'conquered25', name: 'Warlord', desc: 'Conquer 25 nations (across all games).' },
+    { id: 'tutorial', name: 'Graduate', desc: 'Finish the tutorial round.' },
+  ];
+  CHESTS.forEach((c, i) => {
+    const k = i % 6;
+    c.reward = k === 0 || k === 2 ? { t: 'badge', glyph: GLYPHS[Math.floor(i / 2) % GLYPHS.length] }
+      : k === 1 ? { t: 'gold', amt: 1500 + 250 * i }
+      : k === 3 ? { t: 'bomb', kind: i % 12 === 3 ? 'golden' : 'free' }
+      : k === 4 || !FRAMES[Math.floor(i / 6)] ? { t: 'start', amt: 50 }
+      : { t: 'frame', id: FRAMES[Math.floor(i / 6)].id };
+  });
+  const BADGES = CHESTS.filter((c) => c.reward.t === 'badge').map((c) => ({ id: 'b_' + c.id, glyph: c.reward.glyph, name: c.name, hint: c.desc }));
+  const rewardText = (r) => r.t === 'badge' ? `Badge ${r.glyph}` : r.t === 'gold' ? `+${money(r.amt)} in your next game` : r.t === 'bomb' ? (r.kind === 'golden' ? 'A free golden missile in your next game' : 'A free missile in your next game') : r.t === 'start' ? `+${money(r.amt)} starting gold, forever` : `${FRAMES.find((f) => f.id === r.id).name} for your flag`;
+  function chestEarn(id) {
+    const c = CHESTS.find((x) => x.id === id);
+    if (!c) return;
+    const got = store.get('gh.chests') || {};
+    if (got[id]) return;
+    got[id] = { at: Date.now(), opened: false };
+    store.set('gh.chests', got);
+    setTimeout(() => showToast(`Chest earned: ${c.name}. Tap the chest button to open it.`, 'gold'), 900);
+    syncChestBtn();
+  }
+  function syncChestBtn() { $('btn-chest').hidden = !Object.values(store.get('gh.chests') || {}).some((x) => !x.opened); }
+  function pendingNext() { return Object.assign({ gold: 0, coupons: [] }, store.get('gh.pending') || {}); }
+  function openChest(id) {
+    const c = CHESTS.find((x) => x.id === id), got = store.get('gh.chests') || {};
+    if (!c || !got[id] || got[id].opened) return;
+    got[id].opened = true; store.set('gh.chests', got);
+    const r = c.reward;
+    if (r.t === 'badge') { const b = store.get('gh.badges') || {}; b['b_' + id] = true; store.set('gh.badges', b); if (!store.get('gh.badge')) store.set('gh.badge', 'b_' + id); }
+    else if (r.t === 'frame') { const f = store.get('gh.frames') || {}; f[r.id] = true; store.set('gh.frames', f); }
+    else if (r.t === 'start') store.set('gh.startBonus', (store.get('gh.startBonus') || 0) + r.amt);
+    else { const pd = pendingNext(); if (r.t === 'gold') pd.gold += r.amt; else pd.coupons.push(r.kind); store.set('gh.pending', pd); }
+    syncChestBtn(); renderFlag();
+  }
+  // Called when you found your nation in a normal game: pays out the permanent bump and next-game rewards.
+  function applyRewards(p) {
+    if (state.cfg.quest || state.cfg.tutorial) return;
+    const pd = pendingNext();
+    p.gold += (store.get('gh.startBonus') || 0) + pd.gold;
+    p.coupons = pd.coupons.slice();
+    if (pd.gold || pd.coupons.length) { store.set('gh.pending', { gold: 0, coupons: [] }); toast('Chest rewards applied to this game.', 'gold'); }
+  }
+  function renderChests(body) {
+    const got = store.get('gh.chests') || {};
+    const head = document.createElement('p'); head.className = 'note'; head.style.margin = '0 0 10px';
+    head.textContent = `${Object.keys(got).length} of ${CHESTS.length} chests earned. Each one can be earned once, from firsts and milestones.`;
+    const grid = document.createElement('div'); grid.className = 'chests';
+    const ready = CHESTS.filter((c) => got[c.id] && !got[c.id].opened);
+    for (const c of ready) {
+      const d = document.createElement('button'); d.className = 'chest'; d.type = 'button';
+      d.innerHTML = `<span class="box">▣</span><span>${c.name}</span><small>Tap to open</small>`;
+      d.addEventListener('click', () => {
+        d.classList.add('shake');
+        setTimeout(() => { openChest(c.id); d.className = 'chest opened'; d.innerHTML = `<span class="box">★</span><span>${c.name}</span><small>${rewardText(c.reward)}</small>`; sfxPlay('upgrade'); }, 650);
+      }, { once: true });
+      grid.appendChild(d);
+    }
+    body.append(head, grid);
+    const h = document.createElement('div'); h.className = 'k'; h.style.margin = '14px 0 6px'; h.textContent = 'Still to earn';
+    const list = document.createElement('div'); list.className = 'medals';
+    for (const c of CHESTS) {
+      const have = got[c.id];
+      const d = document.createElement('div'); d.className = 'medal' + (have ? ' got' : '');
+      d.innerHTML = `<b>${c.name}</b><span>${c.desc}</span><span>${have && have.opened ? 'Opened: ' + rewardText(c.reward) : have ? 'Ready to open' : 'Reward hidden'}</span>`;
+      list.appendChild(d);
+    }
+    body.append(h, list);
+  }
+  function renderBadges(body) {
+    const have = store.get('gh.badges') || {}, sel = store.get('gh.badge');
+    const head = document.createElement('p'); head.className = 'note'; head.style.margin = '0 0 10px';
+    head.textContent = `${BADGES.filter((b) => have[b.id]).length} of ${BADGES.length} badges. They only come from chests. Tap one you own to show it next to your name.`;
+    const grid = document.createElement('div'); grid.className = 'medals';
+    for (const b of BADGES) {
+      const d = document.createElement('div'); d.className = 'medal' + (have[b.id] ? ' got pick' : '') + (sel === b.id ? ' sel' : '');
+      d.innerHTML = `<span class="badge-g">${have[b.id] ? b.glyph : '?'}</span><b>${have[b.id] ? b.name : 'Locked'}</b><span>${have[b.id] ? (sel === b.id ? 'Shown next to your name' : 'Tap to show') : 'Chest: ' + b.hint}</span>`;
+      if (have[b.id]) d.addEventListener('click', () => { store.set('gh.badge', sel === b.id ? null : b.id); renderFlag(); renderQuests(); });
+      grid.appendChild(d);
+    }
+    body.append(head, grid);
+    const frames = store.get('gh.frames') || {};
+    const h = document.createElement('div'); h.className = 'k'; h.style.margin = '14px 0 6px'; h.textContent = 'Flag frames';
+    const fl = document.createElement('div'); fl.className = 'medals';
+    for (const f of FRAMES) {
+      const d = document.createElement('div'); d.className = 'medal' + (frames[f.id] ? ' got pick' : '') + (store.get('gh.frame') === f.id ? ' sel' : '');
+      d.innerHTML = `<b>${frames[f.id] ? f.name : 'Locked'}</b><span>${frames[f.id] ? (store.get('gh.frame') === f.id ? 'In use' : 'Tap to use') : 'Comes from a chest'}</span>`;
+      if (frames[f.id]) d.addEventListener('click', () => { store.set('gh.frame', store.get('gh.frame') === f.id ? null : f.id); renderFlag(); renderQuests(); });
+      fl.appendChild(d);
+    }
+    body.append(h, fl);
+  }
+
+  /* ----- Tutorial: a round easier than easy, with corner prompts instead of the news feed and scripted rivals ----- */
+  const TUT = [
+    { t: 'Found your nation', x: 'Tap any land on the map, then press Found nation here. Your rivals appear around the world.', done: () => state.started },
+    { t: 'Grow your land', x: 'Tap your land and hold Expand until you own 12 sectors. Each sector costs a little more than the last.', done: () => nations[PLAYER].tiles >= 12 },
+    { t: 'Build a factory', x: 'Press Build, pick Factory, then tap your land. Factories earn money and power the buildings around them.', done: () => nations[PLAYER].blds.some((b) => b.type === 'factory') },
+    { t: 'Build a farm', x: 'Build a Farm too. Farms make the people around them grow, and more people means a stronger army.', done: () => nations[PLAYER].blds.some((b) => b.type === 'farm') },
+    { t: 'Claim more land', x: 'Tap free land on your border and hold Claim, until you own 20 sectors.', done: () => nations[PLAYER].tiles >= 20 },
+    { t: 'Defend', x: 'A rival is landing troops on your land! Your people defend by themselves: each sector costs the attacker as many troops as it has people. Watch the number count down.', done: () => tut.hit && !attacks.some((a) => a.def === PLAYER) },
+    { t: 'Hit back', x: 'Now tap the rival who attacked you, choose how many people to send, and press Invade.', done: () => attacks.some((a) => a.att === PLAYER) || nations[PLAYER].tiles >= 30 },
+  ];
+  const tut = { on: false, step: 0, hit: false };
+  function startTutorial() {
+    closeMenus();
+    $('howto').hidden = true;
+    newGame('easy', { tutorial: true, rivals: 3, money: 3500, name: 'Tutorial' });
+    tut.on = true; tut.step = 0; tut.hit = false;
+    showCoach();
+  }
+  function showCoach() {
+    const s = TUT[tut.step];
+    $('coach').hidden = !tut.on || !s;
+    if (!tut.on || !s) return;
+    $('coach-title').textContent = `Step ${tut.step + 1} of ${TUT.length} · ${s.t}`;
+    $('coach-text').textContent = s.x;
+  }
+  function endTutorial(finished) {
+    tut.on = false; $('coach').hidden = true;
+    if (finished) {
+      const pd = pendingNext(); pd.gold += 1500; store.set('gh.pending', pd);
+      store.set('gh.tutorialDone', true);
+      chestEarn('tutorial'); medal('howto');
+      toast('Tutorial done! Your next real game starts with a money bonus. You can keep playing here.', 'gold');
+    }
+  }
+  function tutorialCheck() {
+    if (!tut.on || state.screen !== 'game' || state.over) return;
+    const s = TUT[tut.step];
+    if (!s) return;
+    // Scripted invasion: once you hold 20 sectors, the nearest rival lands a small army on your land.
+    if (tut.step === 5 && !tut.hit) {
+      const foes = Object.values(nations).filter((n) => !n.isPlayer && n.alive && n.tileList.length);
+      const p = nations[PLAYER];
+      if (foes.length && p.tileList.length) {
+        const att = foes.sort((a, b) => tileDist(a.tileList[0], p.tileList[0]) - tileDist(b.tileList[0], p.tileList[0]))[0];
+        const idx = p.tileList[(rnd() * p.tileList.length) | 0];
+        if (startAttack(att, p, idx, 12)) { tut.hit = true; afterChange(); }
+      }
+    }
+    if (s.done()) { tut.step++; if (tut.step >= TUT.length) endTutorial(true); else showCoach(); }
+  }
+
   /* ================= Wiring ================= */
   $('btn-music').addEventListener('click', toggleMusic);
+  $('btn-assist').addEventListener('click', () => setAssist(!assistSet().on));
+  $('set-assist').addEventListener('change', (e) => { assistSet().on = e.target.checked; store.set('gh.assist', assistSet()); syncAssist(); });
+  $('btn-chest').addEventListener('click', () => openQuests('chests'));
+  $('set-flag').addEventListener('change', (e) => { setFlag(e.target.files[0]); e.target.value = ''; });
+  $('flag-clear').addEventListener('click', clearFlag);
+  $('howto-tut').addEventListener('click', startTutorial);
+  $('coach-skip').addEventListener('click', () => endTutorial(false));
+  $('update-btn').addEventListener('click', applyUpdate);
+  syncAssist(); renderFlag(); syncChestBtn();
+  checkUpdate(); setInterval(checkUpdate, 4 * 60 * 1000);
   $('set-music').addEventListener('change', (e) => { if (e.target.checked !== musicSettings().on) toggleMusic(); });
   $('set-vol').addEventListener('input', (e) => {
     musicSettings().vol = +e.target.value / 100;
@@ -4672,6 +4997,13 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
 
   centreOn(COLS / 2, ROWS * 0.4, minS * 1.5);
   requestAnimationFrame(frame);
+  // After an update reload, drop straight back into the saved game, paused.
+  (function resumeAfterUpdate() {
+    const rid = store.get('gh.resume');
+    if (!rid) return;
+    store.del('gh.resume');
+    if (store.get('gh.run.' + rid)) { loadRun(rid); pauseGame(); }
+  })();
 
 })();
 </script>
