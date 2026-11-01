@@ -75,7 +75,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Phase 5: flag, update button, coach, chests */
 #flagwrap { flex-direction: row; align-items: center; gap: 6px; }
 #myflag { position: relative; width: 36px; height: 24px; border-radius: 3px; overflow: hidden; border: 2px solid var(--line); background: #818cf8; flex: none; }
-#myflag img, #myflag video { width: 100%; height: 100%; object-fit: cover; display: block; }
+#myflag img { width: 100%; height: 100%; object-fit: cover; display: block; }
 #myflag.f-gold { border-color: #e2b54b; box-shadow: 0 0 6px rgba(226,181,75,.6); }
 #myflag.f-red { border-color: #ec5a50; box-shadow: 0 0 6px rgba(236,90,80,.6); }
 #myflag.f-blue { border-color: #5aa9ec; box-shadow: 0 0 6px rgba(90,169,236,.6); }
@@ -566,8 +566,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       <div class="radios"><label><input type="checkbox" id="set-assist"> Place basic buildings and make small upgrades for me</label></div>
       <p class="note" style="margin:0">It never makes big purchases, never attacks, and keeps a gold reserve.</p></div>
     <div class="field"><span class="lbl">Your flag</span>
-      <input type="file" id="set-flag" accept="image/*,video/*">
-      <p class="note" id="flag-msg" style="margin:0">An image or a short video. It stays on this device (small images also go with your cloud save). Erasing all data clears it.</p>
+      <input type="file" id="set-flag" accept="image/*">
+      <p class="note" id="flag-msg" style="margin:0">An image. It is shrunk and goes with your save and your cloud save. Erasing all data clears it.</p>
       <button type="button" class="btn ghost" id="flag-clear">Remove flag</button></div>
     <button type="submit" class="btn gold">Save name</button>
     <div class="field"><span class="lbl">Account and cloud save</span>
@@ -684,28 +684,38 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const SILO_RANGE = (l) => Math.min(2.5, 1 + 0.03 * l);
   const RADAR_RANGE = (l) => Math.round(7 + 0.3 * l);
   const RADAR_CHANCE = (l) => Math.min(0.95, 0.55 + 0.01 * l + 0.05 * step(l, 10, 25));
-  const PORT_SHIPS = (l) => 1 + Math.floor(l / 3);
+  const PORT_SHIPS = (l) => 1 + Math.floor(l / 3) + 2 * step(l, 25, 50);
   const FACTORY_RANGE = (l) => Math.round(14 + 0.4 * l);   // every building except barracks must sit inside a factory's range to work
-  const CITY_RADIUS = (l) => Math.min(16, 4 + Math.floor(l / 3));
-  const PLANT_RANGE = (l) => Math.round(20 + 0.5 * l);
-  const FARM_R = (l) => 3 + Math.floor(l / 6);
-  const BANK_PCT = (l) => 0.08 + 0.005 * l;
-  const LAB_RATE = (l) => +(0.5 + 0.1 * l).toFixed(1);
-  const HEAL_R = (l) => 4 + Math.floor(l / 4);
-  const MON_BONUS = (l) => Math.min(0.5, 0.15 + 0.01 * l), MON_INC = (l) => 50 + 12 * l;
+  const CITY_RADIUS = (l) => Math.min(24, 4 + Math.floor(l / 3) + 2 * step(l, 25, 50, 100));
+  const PLANT_RANGE = (l) => Math.round((20 + 0.5 * l) * (1 + 0.25 * step(l, 10, 25, 50)));
+  const FARM_R = (l) => 3 + Math.floor(l / 6) + step(l, 25, 50);
+  const BANK_PCT = (l) => 0.08 + 0.005 * l + 0.05 * step(l, 10, 25, 50);
+  const LAB_RATE = (l) => +((0.5 + 0.1 * l) * (1 + 0.25 * step(l, 10, 25, 50, 100))).toFixed(1);
+  const HEAL_R = (l) => 4 + Math.floor(l / 4) + 2 * step(l, 25, 50);
+  const MON_BONUS = (l) => Math.min(0.7, 0.15 + 0.01 * l + 0.05 * step(l, 25, 50)), MON_INC = (l) => Math.round((50 + 12 * l) * (1 + 0.25 * step(l, 10, 25, 50)));
   const SPY_R = (l) => 25 + l;
   const FORT_R = (l) => 3 + Math.floor(l / 8), FORT_BONUS = (l) => 0.4 + 0.02 * l;
-  const BUNKER_R = (l) => 3 + Math.floor(l / 8), BUNKER_SHIELD = (l) => Math.min(0.9, 0.35 + 0.012 * l);
-  const AIR_R = (l) => 6 + Math.floor(l * 0.3);
+  const BUNKER_R = (l) => 3 + Math.floor(l / 8), BUNKER_SHIELD = (l) => Math.min(0.9, 0.35 + 0.012 * l + 0.04 * step(l, 10, 25, 50));
+  const AIR_R = (l) => 6 + Math.floor(l * 0.3) + 3 * step(l, 10, 25, 50);
   const BIG_BUILDS = new Set(['factory', 'city', 'spy', 'silo', 'lab']);   // late-game money sinks: up to level 100, everything else stops at 50
   const maxLevel = (t) => (BIG_BUILDS.has(t) ? 100 : 50);
   // The next level that changes something big, shown in the building panel.
   const MILESTONES = {
     factory: [[10, '+25% income'], [25, '+25% income'], [50, '+25% income'], [100, '+25% income']],
     silo: [[2, 'toxic bombs'], [4, 'firestorm bombs'], [6, 'dirty bombs'], [8, 'nukes'], [15, 'MIRV warheads'], [30, 'spy bombs'], [40, 'spy warheads']],
+    port: [[25, '+2 ship berths'], [50, '+2 ship berths']],
+    city: [[25, 'wider reach'], [50, 'wider reach'], [100, 'wider reach']],
+    plant: [[10, '+25% range'], [25, '+25% range'], [50, '+25% range']],
+    farm: [[25, 'wider reach'], [50, 'wider reach']],
+    bank: [[10, '+5% income'], [25, '+5% income'], [50, '+5% income']],
+    lab: [[10, '+25% research'], [25, '+25% research'], [50, '+25% research'], [100, '+25% research']],
+    hospital: [[25, 'wider reach'], [50, 'wider reach']],
+    monument: [[10, '+25% income'], [25, '+5% diplomacy, +25% income'], [50, '+5% diplomacy, +25% income']],
+    bunker: [[10, 'stronger shield'], [25, 'stronger shield'], [50, 'stronger shield']],
+    airbase: [[10, 'longer reach'], [25, 'longer reach'], [50, 'longer reach']],
     radar: [[10, 'stronger shots'], [25, 'stronger shots'], [50, 'sees stealth weapons']],
     sradar: [[7, 'finds bunkers'], [14, 'finds silos'], [21, 'finds airbases'], [28, 'finds spy HQs'], [35, 'finds spy radars'], [50, 'sees stealth weapons']],
-    spy: [[1, 'intel: exact numbers'], [5, 'intel: building counts'], [10, 'intel: hidden buildings and wars'], [25, 'intel: strike plans'], [50, 'intel: full map'], [100, 'unlocks spy radars']],
+    spy: [[1, 'intel: exact numbers'], [5, 'intel: building counts'], [10, 'intel: hidden buildings and wars'], [25, 'intel: strike plans'], [50, 'intel: full map'], [30, 'unlocks spy radars']],
   };
   // Fog of war: rivals' buildings of these kinds stay hidden until found (a spy ship, spy plane, spy radar or Spy HQ intel).
   // Spy radar level N detects the first 1 + N/7 kinds in this order; factories, cities and the rest are always visible.
@@ -1196,7 +1206,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
   // Your best Spy HQ's level, or -1 without one.
   const spyHQLevel = (n) => n.blds.reduce((m, b) => (b.type === 'spy' && b.on ? Math.max(m, b.level) : m), -1);
-  const spyMax = () => buildings.some((b) => b.owner === PLAYER && b.type === 'spy' && b.level >= maxLevel('spy'));
+  const SRADAR_UNLOCK = 30;   // Spy HQ level that unlocks spy radars
+  const spyMax = () => buildings.some((b) => b.owner === PLAYER && b.type === 'spy' && b.level >= SRADAR_UNLOCK);
   const spyAtk = (n) => (n.spyLevel > 0 ? SPY_ATK(n.spyLevel - 1) : 0);
   const spyCity = (n) => (n.spyLevel > 0 ? SPY_CITY(n.spyLevel - 1) : 0);
   const monBonus = (n) => (n.monLevel ? MON_BONUS(n.monLevel - 1) : 0);   // monLevel is the best monument's level + 1, 0 for none
@@ -2180,7 +2191,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (const s of n.blds) {
       if (s.type !== 'silo' || stockTotal(s) >= SILO_CAP(s.level)) continue;
       let t = 'missile';
-      if (nukesAllowed() && s.level >= BOMBS.mirv.siloLevel && rnd() < 0.05 + n.skill * 0.1) t = 'mirv';
+      if (nukesAllowed() && s.level >= BOMBS.spymirv.siloLevel && rnd() < 0.02 + n.skill * 0.04) t = 'spymirv';
+      else if (nukesAllowed() && s.level >= BOMBS.spymissile.siloLevel && rnd() < 0.04 + n.skill * 0.06) t = 'spymissile';
+      else if (nukesAllowed() && s.level >= BOMBS.mirv.siloLevel && rnd() < 0.05 + n.skill * 0.1) t = 'mirv';
       else if (nukesAllowed() && s.level >= BOMBS.nuke.siloLevel && rnd() < 0.12 + n.skill * 0.2) t = 'nuke';
       else if (toxicAllowed() && s.level >= BOMBS.dirty.siloLevel && rnd() < 0.12) t = 'dirty';
       else if (toxicAllowed() && s.level >= BOMBS.firestorm.siloLevel && rnd() < 0.2) t = 'firestorm';
@@ -2262,7 +2275,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     }
     if (idx === null) idx = pick(target.tileList);
     if (idx === undefined || idx === null) return;
-    const order = target.tiles > 80 || rnd() < 0.3 ? ['mirv', 'nuke', 'dirty', 'firestorm', 'toxic', 'missile'] : ['toxic', 'firestorm', 'missile', 'dirty', 'nuke'];
+    const order = target.tiles > 80 || rnd() < 0.3 ? ['spymirv', 'mirv', 'nuke', 'spymissile', 'dirty', 'firestorm', 'toxic', 'missile'] : ['toxic', 'firestorm', 'missile', 'dirty', 'nuke'];
     for (const type of order) {
       const silo = silos.find((s) => s.stock[type] && siloReach(s, idx, type));
       if (silo) {
@@ -2765,7 +2778,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (r.building) return fail('Something is already built there.');
     if (r.toxic) return fail("You can't build on toxic land.");
     if (B.coastal && !r.coastal) return fail('Ports have to be on the coast.');
-    if (B.need === 'spymax' && !spyMax()) return fail('Spy radars need a Spy HQ at its top level.');
+    if (B.need === 'spymax' && !spyMax()) return fail('Spy radars need a Spy HQ at level ${SRADAR_UNLOCK}.');
     if (p.gold < buildCost(p, type)) return fail('Not enough money.');
     p.gold -= buildCost(p, type); bump(p, 'b:' + type);
     const b = placeBuilding(p, type, idx);
@@ -3260,7 +3273,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (let i = 0; i < N; i++) { const r = regions[i]; own[i] = r.owner ? index.get(r.owner) : 0; pop[i] = r.population; tox[i] = r.toxic; }
     return {
       v: 4, cfg: state.cfg, history, shotDown: state.shotDown, firedBomb: state.firedBomb, questDone: state.questDone, diff: state.diff, startMonth: state.startMonth, alliances: [...alliances], runNo: state.runNo, month: state.month, year: state.year, gameClock, nextUid, wonShown: state.wonShown, won90: state.won90, tuneK: state.tuneK, tuneLogged: state.tuneLogged, playerCalm: state.playerCalm || 0,
-      nations: ids.map((id) => { const n = nations[id]; return { id, name: n.name, color: n.color, isPlayer: n.isPlayer, style: n.style, skill: n.skill, aggression: n.aggression, alive: n.alive, buys: n.buys, gold: n.gold, tech: n.tech, peak: n.peak, lastHitBy: n.lastHitBy, milestone: n.milestone, offerCd: n.offerCd, allyCd: n.allyCd, giftCd: n.giftCd, health: n.health, team: n.team, coupons: n.coupons }; }),
+      nations: ids.map((id) => { const n = nations[id]; return { id, name: n.name, color: n.color, isPlayer: n.isPlayer, style: n.style, skill: n.skill, aggression: n.aggression, alive: n.alive, buys: n.buys, gold: n.gold, tech: n.tech, peak: n.peak, lastHitBy: n.lastHitBy, milestone: n.milestone, offerCd: n.offerCd, allyCd: n.allyCd, giftCd: n.giftCd, health: n.health, team: n.team, coupons: n.coupons, intel: n.intel ? [...n.intel] : undefined, spyAt: n.spyAt }; }),
       own: u8ToB64(own), pop: u8ToB64(new Uint8Array(pop.buffer)), tox: u8ToB64(tox),
       buildings: buildings.map((b) => ({ uid: b.uid, type: b.type, level: b.level, owner: b.owner, idx: b.idx, stock: b.stock, golden: b.golden || 0 })),
       found: [...found], spyScans, spyFound,
@@ -3293,6 +3306,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     resetWorld();
     nations = {};
     for (const nd of d.nations) nations[nd.id] = Object.assign(makeNation(nd.id, nd.name, nd.color, nd.isPlayer, null), nd);
+    for (const n of Object.values(nations)) n.intel = Array.isArray(n.intel) ? new Set(n.intel) : undefined;
     const ids = d.nations.map((x) => x.id);
     const own = b64ToU8(d.own), pop = new Uint16Array(b64ToU8(d.pop).buffer), tox = b64ToU8(d.tox);
     for (let i = 0; i < N; i++) { const r = regions[i]; r.owner = own[i] ? ids[own[i] - 1] : null; r.population = pop[i]; r.toxic = tox[i]; }
@@ -3608,7 +3622,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const b = $('set-wipe');
     if (!wipeArmed) { wipeArmed = true; b.textContent = 'Tap again to erase everything'; setTimeout(() => { wipeArmed = false; b.textContent = 'Erase all saved data'; }, 3000); return; }
     try { Object.keys(localStorage).filter((k) => k.startsWith('gh.')).forEach((k) => localStorage.removeItem(k)); } catch (_) {}
-    assistSetting = null; flagPut(null).catch(() => {}); renderFlag(); syncChestBtn(); syncAssist();
+    assistSetting = null; renderFlag(); syncChestBtn(); syncAssist();
     wipeArmed = false; b.textContent = 'Erase all saved data';
     $('set-name').value = playerName();
     $('set-msg').className = 'note'; $('set-msg').textContent = 'All runs, replays, medals and games were erased.' + (cloud.user ? ' Your cloud save is untouched: press Restore from cloud to bring it back.' : '');
@@ -4667,22 +4681,13 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (up) { upgradeBuilding(up); toast(`Assistant upgraded a ${BUILD[up.type].name}.`, 'info'); }
   }
 
-  /* ----- Custom flag: images are shrunk and kept in the save; videos stay in this browser's IndexedDB ----- */
-  const flagDB = () => new Promise((res, rej) => { const q = indexedDB.open('gh-flag', 1); q.onupgradeneeded = () => q.result.createObjectStore('f'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
-  async function flagPut(blob) { const db = await flagDB(); return new Promise((res) => { const t = db.transaction('f', 'readwrite'); if (blob) t.objectStore('f').put(blob, 'v'); else t.objectStore('f').clear(); t.oncomplete = () => res(true); t.onerror = () => res(false); }); }
-  async function flagGet() { const db = await flagDB(); return new Promise((res) => { const q = db.transaction('f').objectStore('f').get('v'); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); }); }
-  let flagUrl = null;
-  async function renderFlag() {
+  /* ----- Custom flag: images are shrunk and kept in the save ----- */
+  function renderFlag() {
     const box = $('myflag'), meta = store.get('gh.flag');
     box.innerHTML = '';
     box.style.background = PLAYER_DEF.color;
-    if (flagUrl) { URL.revokeObjectURL(flagUrl); flagUrl = null; }
     try {
       if (meta && meta.kind === 'img') { const i = new Image(); i.src = meta.data; i.alt = ''; box.appendChild(i); }
-      else if (meta && meta.kind === 'video') {
-        const blob = await flagGet();
-        if (blob) { flagUrl = URL.createObjectURL(blob); const v = document.createElement('video'); v.src = flagUrl; v.muted = v.loop = v.autoplay = v.playsInline = true; v.play().catch(() => {}); box.appendChild(v); }
-      }
     } catch (_) {}
     const fr = FRAMES.find((f) => f.id === store.get('gh.frame'));
     box.className = fr ? 'f-' + fr.id : '';
@@ -4694,21 +4699,18 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const msg = $('flag-msg');
     if (!file) return;
     try {
-      if (file.type.startsWith('video/')) {
-        if (file.size > 8e6) { msg.textContent = 'That video is over 8 MB. Pick a shorter one.'; return; }
-        await flagPut(file); store.set('gh.flag', { kind: 'video' });
-      } else if (file.type.startsWith('image/')) {
+      if (file.type.startsWith('image/')) {
         const bmp = await createImageBitmap(file);
         const k = Math.min(1, 144 / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
         c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
         c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
-        await flagPut(null); store.set('gh.flag', { kind: 'img', data: c.toDataURL('image/jpeg', 0.8) });
-      } else { msg.textContent = 'Pick an image or a video.'; return; }
+        store.set('gh.flag', { kind: 'img', data: c.toDataURL('image/jpeg', 0.8) });
+      } else { msg.textContent = 'Pick an image.'; return; }
       msg.textContent = 'Flag saved.';
     } catch (_) { msg.textContent = "That file couldn't be used."; }
     renderFlag();
   }
-  async function clearFlag() { store.del('gh.flag'); try { await flagPut(null); } catch (_) {} $('flag-msg').textContent = 'Flag removed.'; renderFlag(); }
+  function clearFlag() { store.del('gh.flag'); $('flag-msg').textContent = 'Flag removed.'; renderFlag(); }
 
   /* ----- Update check: the game fetches its own page and compares a hash, so the button only appears once the new version is really live ----- */
   const upd = { hash: null };
