@@ -1005,6 +1005,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
   // Only one rival army may be invading you at any moment; the rest wait their turn.
   const playerUnderAttack = (exceptId) => attacks.some((a) => a.def === PLAYER && a.att !== exceptId);
+  // While your own army is out invading, no rival can start an invasion of you (except the rare nation that rolled to fight back).
+  const playerInvading = () => attacks.some((a) => a.att === PLAYER);
   const bombsAllowed = () => monthsIn() >= D().bombYears * 12;
   const toxicAllowed = () => D().toxic;
   const nukesAllowed = () => D().nukeYears !== null && monthsIn() >= D().nukeYears * 12;
@@ -1428,7 +1430,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const fearOf = (att, def) => clamp((att.tiles / Math.max(1, def.tiles) - 1) / 2, 0, 1);
   // Chance an invaded nation invades back. Small to begin with, and nearly zero once it is scared of you.
   function retaliation(att, def) {
-    const base = D().level === 1 ? 0.03 : lerp(0.04, 0.14, def.aggression);
+    const base = lerp(0.01, 0.04, def.aggression);
     return base * Math.pow(1 - fearOf(att, def), 2);
   }
   // Troops needed to take a sector = the people defending it. Nothing else counts.
@@ -1453,8 +1455,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const eff = troops / (1 + overSize(att, def) * 0.6);
     return 1 / (1 + Math.pow(need / eff, 3));
   }
-  function startAttack(att, def, idx, pct) {
-    if (def.isPlayer && !att.isPlayer && playerUnderAttack(att.id)) return null;   // one rival army at you at a time
+  function startAttack(att, def, idx, pct, hitBack) {
+    if (def.isPlayer && !att.isPlayer && (playerUnderAttack(att.id) || (playerInvading() && !hitBack))) return null;   // one rival army at you at a time, and none while you are invading
     const troops = Math.floor(att.pop * pct / 100);
     if (troops < 40) return null;
     for (const i of att.tileList) regions[i].population = Math.round(regions[i].population * (1 - pct / 100));
@@ -1475,6 +1477,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (const a of attacks.slice()) {
       const att = nations[a.att], def = nations[a.def];
       if (!att || !def || !att.alive || !def.alive || !isAtWar(att.id, def.id)) { endAttack(a); continue; }
+      const war = wars.get(warKey(att.id, def.id));
+      if (war) war.last = monthIndex();   // a war with an army in the field never cools into a ceasefire and calls the troops home
       // A helper army fights for its ally: the land it takes goes to them, so it pushes from their border too.
       const friend = a.for && nations[a.for] && nations[a.for].alive && isAllied(a.for, att.id) ? nations[a.for] : null;
       const gets = friend || att;
@@ -2141,10 +2145,10 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       const tiles = blocFront(n, foe.id);
       if (!tiles.length) continue;
       if (foe.isPlayer && playerUnderAttack(n.id)) continue;   // another rival is already invading you
-      let pct = clamp(Math.round(lerp(8, 25, n.aggression) + n.skill * 10), 5, 35);
-      if (foe.isPlayer) pct = Math.max(4, Math.round(pct * lerp(0.5, 1, ramp())));
-      if (startAttack(n, foe, pick(tiles), pct)) {
-        if (foe.isPlayer) toast(`${n.name} is invading you back.`, 'bad');
+      // The rare nation that does fight back throws everything it has at you.
+      const pct = 100;
+      if (startAttack(n, foe, pick(tiles), pct, true)) {
+        if (foe.isPlayer) toast(`${n.name} is invading you back with everything it has.`, 'bad');
         return true;
       }
     }
@@ -2157,7 +2161,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (const id of foes) {
       const d = nations[id];
       if (!d || !d.alive || inTruce(n.id, id) || isAllied(n.id, id)) continue;
-      if (d.isPlayer && (monthsIn() < D().grace || (state.playerCalm || 0) > monthIndex() || playerUnderAttack(n.id))) continue;
+      if (d.isPlayer && (monthsIn() < D().grace || (state.playerCalm || 0) > monthIndex() || playerUnderAttack(n.id) || playerInvading())) continue;
       const allyWar = alliesOf(n).some((a) => isAtWar(a.id, id));
       // The player gets no extra attention: a small shield on easier modes, nothing on Hard.
       const score = winChance(n, d) + threatOf(d) * 0.6 + (isAtWar(n.id, id) ? 0.15 : 0) + (allyWar ? 0.2 : 0) + (1 - sk) * rnd() * 0.6 - (d.isPlayer ? D().shield + (1 - ramp()) * 0.25 : 0);
@@ -3300,6 +3304,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     $('pause-text').textContent = !state.started ? 'Your nation has not been founded yet.' : saved ? 'Your run is saved.' : "This browser won't let the game save.";
     $('pause').hidden = false;
     stopMusic();
+    if (synth.ctx && synth.ctx.state === 'running') synth.ctx.suspend().catch(() => {});
   }
   function resumeGame() { state.paused = false; $('pause').hidden = true; startMusic(); }
 
@@ -4040,8 +4045,10 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   /* ================= Generated audio ================= */
   // Songs and sound effects are synthesised here with Web Audio. Audio uses Math.random so it never disturbs the seeded game.
   const synth = { ctx: null, music: null, sfx: null, noise: null, sfxSet: null };
+  // Everything goes silent while the game is paused: music is stopped and the audio clock is frozen so no queued note or effect plays on.
+  const audioPaused = () => state.screen === 'game' && state.paused;
   function audioCtx() {
-    if (!music.unlocked) return null;
+    if (!music.unlocked || audioPaused()) return null;
     if (!synth.ctx) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
@@ -4194,7 +4201,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   };
   const sfxLast = {};
   function sfxPlay(name, vol = 1) {
-    if (!sfxSettings().on || music.hold) return;
+    if (!sfxSettings().on || music.hold || audioPaused()) return;
     const c = audioCtx();
     if (!c) return;
     const now = performance.now();
@@ -4770,23 +4777,67 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
   function setAssist(on) { assistSet().on = on; store.set('gh.assist', assistSet()); syncAssist(); toast(on ? 'Assistant on: it will place basic buildings and make small upgrades.' : 'Assistant off.', 'info'); }
   const ASSIST_MAX_COST = 2500, ASSIST_MAX_LEVEL = 10;
+  // What the assistant builds, in order of priority, and how many it wants for a nation of this size.
+  const ASSIST_PLAN = [
+    ['factory', (p) => 1 + Math.floor(p.tiles / 50)],
+    ['farm', (p) => Math.floor(p.tiles / 25)],
+    ['city', (p) => 1 + Math.floor(p.tiles / 120)],
+    ['bank', (p) => (p.tech >= 105 ? Math.floor(p.tiles / 100) : 0)],
+    ['lab', (p) => (p.tiles > 40 ? 1 : 0)],
+    ['hospital', (p) => (p.tech >= 105 && p.tiles > 60 ? 1 : 0)],
+  ];
+  const ASSIST_VALUE = { city: 3, bank: 2.5, factory: 2, farm: 1.5, lab: 1, hospital: 0.7 };
+  // Picks a safe, useful sector: away from the front line, spread out from buildings of the same kind (so their areas
+  // don't overlap), on busy land for farms and cities, and inside a factory's power range when the building needs power.
+  function assistSpot(p, type) {
+    const B = BUILD[type];
+    const same = p.blds.filter((b) => b.type === type);
+    const power = B.free ? [] : p.blds.filter((b) => b.type === 'factory' || b.type === 'plant');
+    if (!B.free && !power.length && type !== 'factory') return null;
+    const front = p.enemyFront.length > 12 ? Array.from({ length: 12 }, () => pick(p.enemyFront)) : p.enemyFront;
+    let best = null, bestS = -Infinity;
+    for (let t = 0; t < 40; t++) {
+      const i = pick(p.tileList);
+      if (i === undefined) break;
+      const r = regions[i];
+      if (r.building || r.toxic || (B.coastal && !r.coastal)) continue;
+      if (power.length && !power.some((f) => tileDist(f.idx, i) <= (f.type === 'plant' ? PLANT_RANGE : FACTORY_RANGE)(f.level))) continue;
+      const gap = Math.min(30, ...same.map((b) => tileDist(b.idx, i)), 30);
+      const danger = front.length ? Math.min(20, ...front.map((j) => tileDist(j, i))) : 20;
+      const busy = ['farm', 'city'].includes(type) ? r.population / POP_CAP * 8 : 0;
+      const s = gap * (B.radius ? 1 : 0.2) + danger * 0.8 + busy + rnd();
+      if (s > bestS) { bestS = s; best = i; }
+    }
+    return best;
+  }
+  // Runs once a month. Keeps a gold reserve, then does up to two things: build what's missing, or upgrade whatever pays best.
   function assistTurn() {
     const p = nations[PLAYER];
     if (!assistSet().on || !state.started || state.over || !p || !p.alive || state.cfg.tutorial || needsStart()) return;
-    const room = p.gold - Math.max(1500, p.income * 5);   // always keep a reserve
-    if (room < 150) return;
-    const cnt = (t) => p.blds.filter((b) => b.type === t).length;
-    const want = [];
-    if (!cnt('factory') || cnt('factory') < 1 + Math.floor(p.tiles / 60)) want.push('factory');
-    if (cnt('farm') < Math.floor(p.tiles / 30)) want.push('farm');
-    for (const t of want) {
-      const cost = buildCost(p, t);
-      if (cost > room || cost > ASSIST_MAX_COST || p.tech < BUILD[t].tech) continue;
-      const idx = aiBuildSpot(p, false, t);
-      if (idx !== null && placeAt(t, idx)) { toast(`Assistant built a ${BUILD[t].name}.`, 'info'); return; }
+    const hot = attacks.some((a) => a.def === PLAYER);   // keep more in the bank while someone is invading you
+    const reserve = Math.max(1500, p.income * 5) * (hot ? 2 : 1);
+    const cap = Math.max(ASSIST_MAX_COST, p.income * 8);
+    for (let step = 0; step < 2; step++) {
+      const room = p.gold - reserve;
+      if (room < 150) return;
+      const cnt = (t) => p.blds.filter((b) => b.type === t).length;
+      let did = false;
+      for (const [t, want] of ASSIST_PLAN) {
+        if (cnt(t) >= want(p) || p.tech < BUILD[t].tech) continue;
+        const cost = buildCost(p, t);
+        if (cost > room || cost > cap) continue;
+        const idx = assistSpot(p, t);
+        if (idx !== null && placeAt(t, idx)) { toast(`Assistant built a ${BUILD[t].name}.`, 'info'); did = true; break; }
+      }
+      if (did) continue;
+      // Small upgrades only, but let the cap grow when there is plenty of money.
+      const lvlCap = ASSIST_MAX_LEVEL + Math.floor(Math.max(0, room - 2500) / 3000);
+      const up = p.blds
+        .filter((b) => ASSIST_VALUE[b.type] && b.level < Math.min(lvlCap, maxLevel(b.type)) && upgradeCost(p, b) <= Math.min(room, cap))
+        .sort((a, b) => ASSIST_VALUE[b.type] / upgradeCost(p, b) - ASSIST_VALUE[a.type] / upgradeCost(p, a))[0];
+      if (!up) return;
+      upgradeBuilding(up); toast(`Assistant upgraded a ${BUILD[up.type].name}.`, 'info');
     }
-    const up = p.blds.filter((b) => ['factory', 'farm'].includes(b.type) && b.level < ASSIST_MAX_LEVEL && upgradeCost(p, b) <= Math.min(room, ASSIST_MAX_COST)).sort((a, b) => a.level - b.level)[0];
-    if (up) { upgradeBuilding(up); toast(`Assistant upgraded a ${BUILD[up.type].name}.`, 'info'); }
   }
 
   /* ----- Custom flag: images are shrunk and kept in the save ----- */
