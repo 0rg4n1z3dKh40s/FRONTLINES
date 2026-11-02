@@ -3492,18 +3492,10 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (synth.ctx && synth.ctx.state === 'running') synth.ctx.suspend().catch(() => {});
   }
   function resumeGame() { state.paused = false; $('pause').hidden = true; music.hold = false; wakeMusic(); }
-  // Unfreezes the audio clock inside the tap, then starts the song once it is really running. If the browser leaves the clock stuck, it is rebuilt.
+  // Unfreezes the audio clock inside the tap (browsers only allow that during a tap), then starts the song.
   function wakeMusic() {
     const c = synth.ctx;
-    if (c && c.state !== 'running') {
-      c.resume().catch(() => {}).then(() => {
-        startMusic();
-        setTimeout(() => {
-          if (synth.ctx !== c || c.state === 'running' || state.paused || !musicSettings().on) return;
-          stopGen(0.01); synth.ctx = null; c.close().catch(() => {}); startMusic();
-        }, 600);
-      });
-    }
+    if (c && c.state !== 'running' && c.state !== 'closed') c.resume().catch(() => {}).then(() => startMusic());
     startMusic();
   }
 
@@ -3628,7 +3620,6 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     document.body.classList.add('on-title');
     $('title').hidden = false;
     updateRunsCount();
-    wakeMusic();   // inside the tap, so the browser lets the lobby song start
   }
 
   /* ================= Player name ================= */
@@ -5337,7 +5328,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   $('build-close').addEventListener('click', closeBuildMenu);
   $('modebar-cancel').addEventListener('click', cancelMode);
   $('pause-resume').addEventListener('click', resumeGame);
-  $('pause-exit').addEventListener('click', () => { saveRun(); showTitle(); });
+  $('pause-exit').addEventListener('click', () => { saveRun(); showTitle(); wakeMusic(); });
   $('end-continue').addEventListener('click', () => { $('endscreen').hidden = true; state.over = false; saveRun(); });
   $('end-menu').addEventListener('click', showTitle);
   $('menu-single').addEventListener('click', openDiff);
