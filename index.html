@@ -342,6 +342,13 @@ tr.me td { color: #a5b0fb; }
 .atk-bar i { display: block; height: 100%; background: var(--good); }
 .atk.in .atk-bar i { background: var(--bad); }
 .atk .btn { padding: 6px; font-size: 10px; }
+.fear { display: grid; gap: 4px; }
+.fear-top { display: flex; justify-content: space-between; font: 700 12px var(--display); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.fear-top b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.fear-bar { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.fear-bar i { display: block; height: 100%; width: 0; background: #e6b84a; transition: width 0.2s; }
+.fear-note { font-size: 12px; color: var(--muted); }
+.fear.slow .fear-note { color: var(--bad); }
 .troops { font: 700 22px var(--display); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 .pcts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
 .pcts button { padding: 8px 0; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--fg); font: 700 12px var(--display); cursor: pointer; font-variant-numeric: tabular-nums; }
@@ -505,7 +512,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   <div class="modal glass wide">
     <h2>Quests</h2>
     <div class="seg" role="group" aria-label="Quests sections">
-      <button data-tab="quests">Quests</button><button data-tab="medals">Medals</button><button data-tab="chests">Chests</button><button data-tab="badges">Badges</button><button data-tab="board">Leaderboard</button><button data-tab="custom">My games</button>
+      <button data-tab="quests">Quests</button><button data-tab="medals">Medals</button><button data-tab="chests">Chests</button><button data-tab="badges">Badges</button><button data-tab="board">Leaderboard</button><button data-tab="global">Global</button><button data-tab="custom">My games</button>
     </div>
     <div id="quests-body"></div>
     <button class="btn ghost" id="quests-back">Back</button>
@@ -601,7 +608,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     <h2>How to play</h2>
     <dl>
       <dt>Start</dt><dd>Tap any land and press <b>Found nation here</b>. 49 rival nations appear around the world.</dd>
-      <dt>Grow</dt><dd>Tap anywhere on a nation to see everything about it: people, land, buildings, bombs, wars and allies. Tap your land and hold <b>Expand</b>, or tap free land on your border and hold <b>Claim</b>. Tap a neighbour's land, choose how many of your people to send (1% to 100%), and press <b>Invade</b>: your troops sweep in as a wave and their number counts down as they fight. It's all about population: each sector costs as many troops as the people defending it, so if you send more troops than they have people, you win. A nation you invade doesn't automatically invade back (only sometimes does), but its people still defend, so a bigger nation just takes your troops longer to get through. Sending 100% leaves your own land empty. Every purchase costs a little more than the last one, for every nation.</dd>
+      <dt>Grow</dt><dd>Tap anywhere on a nation to see everything about it: people, land, buildings, bombs, wars and allies. Tap your land and hold <b>Expand</b>, or tap free land on your border and hold <b>Claim</b>. Tap a neighbour's land, choose how many of your people to send (1% to 100%), and press <b>Invade</b>: your troops sweep in as a wave and their number counts down as they fight. It's all about population: each sector costs as many troops as the people defending it, so if you send more troops than they have people, you win. A nation you invade rarely invades back, and almost never if you are more than twice its size (watch its <b>Scared of you</b> bar). But a nation more than twice your size is slow to get through, and your troops keep bleeding away while you try, so a giant can stop you cold. Sending 100% leaves your own land empty. Every purchase costs a little more than the last one, for every nation.</dd>
       <dt>Build</dt><dd>Pick a building from the bottom bar, then tap your land to place it. Tap it later to upgrade it.
         Press <b>Build</b> (or B) to see everything: factories, power plants, farms, banks, cities, barracks, forts, bunkers, silos, radars, airbases, spy HQs, ports, research labs, hospitals and monuments. <b>Factories</b> and <b>power plants</b> power everything in their ring: anything marked <b>Needs power</b> does nothing outside one. <b>Barracks</b>, <b>forts</b> and <b>farms</b> work anywhere. A <b>City</b> is expensive but doubles your income and doubles the people around it.</dd>
       <dt>Bombs</dt><dd>Buy bombs at a silo; higher silo levels unlock stronger ones: missile, toxic bomb, firestorm, dirty bomb, nuke and finally the MIRV, which splits into many nukes over the target. Each bomb has its own range, and upgrading adds more. To fire, tap enemy land and pick a bomb that can reach. A bomb shot down by a radar or ship does no damage at all. Bombs that land leave toxic fallout that kills people and blocks land until it fades, or until you pay for a cleanup.</dd>
@@ -1411,6 +1418,19 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
      An invaded nation doesn't automatically invade back; some roll to retaliate (see startAttack). */
   const ATTACK_PCTS = [1, 10, 25, 50, 75, 100];
   let attacks = [];
+  // Size matters. A nation that is more than twice your size is slow to chew through, and your troops bleed away
+  // while you try. A nation you dwarf is scared of you, so it almost never fights back.
+  const bigness = (att, def) => def.tiles / Math.max(1, att.tiles);            // how many times bigger the defender is
+  const overSize = (att, def) => Math.max(0, bigness(att, def) - 2);
+  const paceOf = (att, def) => Math.max(0.08, 1 / (1 + overSize(att, def) * 1.5));   // 1 = full speed
+  const drainOf = (att, def) => Math.min(0.02, overSize(att, def) * 0.004);          // share of the army lost per step
+  // 0 when it is your size or bigger, 1 when you are 3x its size or more.
+  const fearOf = (att, def) => clamp((att.tiles / Math.max(1, def.tiles) - 1) / 2, 0, 1);
+  // Chance an invaded nation invades back. Small to begin with, and nearly zero once it is scared of you.
+  function retaliation(att, def) {
+    const base = D().level === 1 ? 0.03 : lerp(0.04, 0.14, def.aggression);
+    return base * Math.pow(1 - fearOf(att, def), 2);
+  }
   // Troops needed to take a sector = the people defending it. Nothing else counts.
   function sectorCost(att, def, i) {
     return Math.max(10, Math.round(regions[i].population / (1 + spyAtk(att))));
@@ -1429,7 +1449,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const need = near.reduce((sum, [i]) => sum + sectorCost(att, def, i), 0);
     if (troops <= 0) return 0;
     if (need <= 0) return 1;
-    return 1 / (1 + Math.pow(need / troops, 3));
+    // Against a much bigger nation the army also bleeds while it crawls forward.
+    const eff = troops / (1 + overSize(att, def) * 0.6);
+    return 1 / (1 + Math.pow(need / eff, 3));
   }
   function startAttack(att, def, idx, pct) {
     if (def.isPlayer && !att.isPlayer && playerUnderAttack(att.id)) return null;   // one rival army at you at a time
@@ -1439,10 +1461,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     hostile(att, def);
     const same = attacks.find((a) => a.att === att.id && a.def === def.id);
     if (same) { same.troops += troops; same.start += troops; same.origin = idx; return same; }
-    // Being invaded doesn't make a rival invade back: each invasion rolls once for whether they retaliate.
-    // On Easy only 10% answer back, and the bigger the nation the less likely it is.
-    const answer = D().level === 1 ? 0.1 * (1 - Math.min(1, def.tiles / landCount / 0.3)) : lerp(0.15, 0.5, def.aggression);
-    const retal = !def.isPlayer && rnd() < answer;
+    // Being invaded rarely makes a rival invade back: each invasion rolls once for whether they retaliate,
+    // and a nation that is less than half your size is too scared to try (see retaliation).
+    const retal = !def.isPlayer && rnd() < retaliation(att, def);
     const a = { id: nextUid++, att: att.id, def: def.id, troops, start: troops, origin: idx, taken: 0, landing: !borders(idx, att.id), retal };
     attacks.push(a);
     return a;
@@ -1466,7 +1487,11 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         .sort((x, y) => x[1] - y[1]).slice(0, 40);
       // Each step the army fights with a slice of its strength; every troop spent is a troop lost.
       // The defenders of each sector have to be worn down before it falls, so the number counts down steadily.
-      let budget = Math.max(25, a.troops * 0.025), took = 0;
+      const pace = paceOf(att, def);
+      let budget = Math.max(25, a.troops * 0.025) * pace, took = 0;
+      // Hacking at a giant costs people even when it gets you nowhere.
+      a.troops -= a.troops * drainOf(att, def);
+      a.slow = pace < 1;
       a.hits = a.hits || {};
       for (const [j, , cost] of cands) {
         if (budget <= 0 || a.troops < 1 || took >= 10) break;
@@ -1528,7 +1553,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       row.className = 'atk ' + (out ? 'out' : 'in');
       const pctLeft = Math.max(0, Math.round((a.troops / a.start) * 100));
       row.innerHTML = `<div class="atk-top"><span></span><b></b></div><div class="atk-bar"><i style="width:${pctLeft}%"></i></div>`;
-      row.querySelector('span').textContent = out ? `Invading ${other.name}` : `${other.name} is invading you`;
+      row.querySelector('span').textContent = (out ? `Invading ${other.name}` : `${other.name} is invading you`) + (a.slow ? ' (slow)' : '');
       row.querySelector('b').textContent = `${Math.floor(a.troops).toLocaleString('en-US')} troops`;
       if (out) mk(row, 'ghost', 'Call back', () => endAttack(a, true));
       box.appendChild(row);
@@ -2529,10 +2554,12 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     // Leaderboard (this device only)
     const mult = { easy: 1, medium: 1.5, hard: 2.2, extreme: 3 }[state.diff] || 1;
     const score = Math.round(rep.land * 100 * mult + (won ? 5000 * mult : 0));
-    const board = store.get('gh.board') || [];
-    board.push({ name: rep.name, diff: state.diff, won, land: rep.land, score, at: rep.at, label: rep.quest ? QUESTS.find((q) => q.id === rep.quest)?.name : rep.custom });
+    // One entry per run: finishing again (Keep playing, then a later end) replaces the earlier entry.
+    const board = (store.get('gh.board') || []).filter((r) => r.run !== rep.id);
+    board.push({ run: rep.id, name: rep.name, diff: state.diff, won, land: rep.land, score, at: rep.at, label: rep.quest ? QUESTS.find((q) => q.id === rep.quest)?.name : rep.custom });
     board.sort((a, b) => b.score - a.score);
     store.set('gh.board', board.slice(0, 20));
+    globalSubmit();
   }
 
   /* ================= Notifications ================= */
@@ -2958,7 +2985,18 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
             const troops = () => Math.floor(p.pop * state.attackPct / 100);
             const odds = document.createElement('div'); odds.className = 'troops';
             live(est, () => `${troops().toLocaleString('en-US')} troops · ${Math.round(survivalChance(p, owner, r.id, troops()) * 100)}% chance to win`);
-            live(odds, () => `You ${Math.round(p.pop).toLocaleString('en-US')} people · ${owner.name} ${seePop(owner.pop)}`);
+            // Scared bar: how afraid they are of you, which shrinks their odds of invading back.
+            const fear = document.createElement('div'); fear.className = 'fear';
+            fear.innerHTML = '<div class="fear-top"><span>Scared of you</span><b></b></div><div class="fear-bar"><i></i></div><div class="fear-note"></div>';
+            const fearLive = () => {
+              const f = fearOf(p, owner), big = bigness(p, owner);
+              fear.querySelector('i').style.width = Math.round(f * 100) + '%';
+              fear.querySelector('b').textContent = Math.round(f * 100) + '%';
+              fear.querySelector('.fear-note').textContent = f > 0 ? `Only a ${(retaliation(p, owner) * 100).toFixed(1)}% chance they fight back.`
+                : big > 2 ? `They are ${big.toFixed(1)}x your size: the invasion will crawl and your troops will bleed.` : `Chance they fight back: ${(retaliation(p, owner) * 100).toFixed(0)}%.`;
+              fear.classList.toggle('slow', f === 0 && big > 2);
+            };
+            live(odds, () => { fearLive(); return `You ${Math.round(p.pop).toLocaleString('en-US')} people · ${owner.name} ${seePop(owner.pop)}`; });
             for (const pc of ATTACK_PCTS) {
               const b = document.createElement('button');
               b.type = 'button';
@@ -2973,7 +3011,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
               armed = false;
               invadeSector(r.id, state.attackPct);
             }, { disabled: () => troops() < 40 });
-            sect.prepend(head); sect.insertBefore(seg, go); sect.insertBefore(est, go); sect.insertBefore(odds, go);
+            sect.prepend(head); sect.insertBefore(seg, go); sect.insertBefore(est, go); sect.insertBefore(odds, go); sect.insertBefore(fear, go);
             box.appendChild(sect);
           }
           const strikes = document.createElement('div');
@@ -3261,8 +3299,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const saved = saveRun();
     $('pause-text').textContent = !state.started ? 'Your nation has not been founded yet.' : saved ? 'Your run is saved.' : "This browser won't let the game save.";
     $('pause').hidden = false;
+    stopMusic();
   }
-  function resumeGame() { state.paused = false; $('pause').hidden = true; }
+  function resumeGame() { state.paused = false; $('pause').hidden = true; startMusic(); }
 
   const u8ToB64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
   const b64ToU8 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
@@ -3572,12 +3611,12 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     try {
       const [app, auth, fs] = await Promise.all([import(FB_CDN + 'firebase-app.js'), import(FB_CDN + 'firebase-auth.js'), import(FB_CDN + 'firebase-firestore.js')]);
       const a = app.initializeApp(FIREBASE_CONFIG);
-      cloud.fb = { auth, a: auth.getAuth(a), db: fs.getFirestore(a), doc: fs.doc, getDoc: fs.getDoc, setDoc: fs.setDoc };
+      cloud.fb = { auth, a: auth.getAuth(a), db: fs.getFirestore(a), doc: fs.doc, getDoc: fs.getDoc, setDoc: fs.setDoc, collection: fs.collection, query: fs.query, orderBy: fs.orderBy, limit: fs.limit, getDocs: fs.getDocs };
     } catch (_) { cloudRender(); return; }
     await new Promise((resolve) => {
       cloud.fb.auth.onAuthStateChanged(cloud.fb.a, async (u) => {
         cloud.user = u; cloud.err = '';
-        if (u) await cloudReconcile();
+        if (u) { await cloudReconcile(); globalSubmit(); }
         cloudRender(); resolve();
       });
     });
@@ -3631,6 +3670,43 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     updateRunsCount();
   }
 
+  /* ----- Global leaderboard: Firestore `scores`, one doc per player and run (id uid_run). Reading is public; writing needs sign-in.
+     Rules:  match /scores/{id} { allow read: if true;
+               allow create, update: if request.auth != null && request.resource.data.uid == request.auth.uid && id == request.auth.uid + '_' + request.resource.data.run
+                 && request.resource.data.score is int && request.resource.data.score >= 0 && request.resource.data.score <= 100000 && request.resource.data.name.size() <= 24; }
+     Scores are computed on the device, so a determined cheater can post a fake one; this is a friendly board, not a secured one. ----- */
+  let globalBusy = false;
+  async function globalSubmit() {
+    const { user, fb } = cloud;
+    if (!user || !fb || globalBusy) return;
+    globalBusy = true;
+    try {
+      const board = store.get('gh.board') || [];
+      let changed = false;
+      for (const r of board) {
+        if (!r.run || r.sent === r.score) continue;
+        await fb.setDoc(fb.doc(fb.db, 'scores', user.uid + '_' + r.run), { uid: user.uid, run: r.run, name: String(r.name).slice(0, 24), diff: r.diff, won: !!r.won, land: r.land, score: r.score, at: r.at, label: r.label || '' });
+        r.sent = r.score; changed = true;
+      }
+      if (changed) store.set('gh.board', board);
+    } catch (_) {} finally { globalBusy = false; }
+  }
+  async function renderGlobal(body) {
+    body.innerHTML = '<p class="empty">Loading…</p>';
+    const { fb, user } = cloud;
+    if (!fb) { body.innerHTML = '<p class="empty">The global leaderboard isn’t switched on yet.</p>'; return; }
+    try {
+      await globalSubmit();
+      const snap = await fb.getDocs(fb.query(fb.collection(fb.db, 'scores'), fb.orderBy('score', 'desc'), fb.limit(50)));
+      if (questTab !== 'global') return;
+      const rows = snap.docs.map((d) => d.data());
+      const note = user ? 'Your finished games are posted here automatically.' : 'Sign in with Google in Settings to post your own scores.';
+      body.innerHTML = (rows.length ? `<div class="table-wrap" style="margin-top:0"><table><thead><tr><th>#</th><th>Player</th><th>Game</th><th>Land</th><th>Score</th></tr></thead><tbody>${rows.map((r, i) =>
+        `<tr${user && r.uid === user.uid ? ' style="font-weight:700"' : ''}><td>${i + 1}</td><td style="text-align:left">${esc(r.name)}<small>${r.won ? 'Won' : 'Fell'}</small></td><td style="text-align:left">${esc(r.label || 'Standard')}<small>${DIFFS[r.diff] ? DIFFS[r.diff].name : ''}</small></td><td>${r.land}%</td><td>${Number(r.score).toLocaleString('en-US')}</td></tr>`).join('')}</tbody></table></div>`
+        : '<p class="empty">No scores yet. Be the first.</p>') + `<p class="note">${note}</p>`;
+    } catch (_) { if (questTab === 'global') body.innerHTML = '<p class="empty">Couldn’t load the global leaderboard. Check your connection and try again.</p>'; }
+  }
+
   /* ================= Quests screen: quests, medals, leaderboard, my games ================= */
   let questTab = 'quests';
   function openQuests(tab) {
@@ -3671,6 +3747,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       }
     } else if (questTab === 'chests') { renderChests(body);
     } else if (questTab === 'badges') { renderBadges(body);
+    } else if (questTab === 'global') { renderGlobal(body);
     } else if (questTab === 'board') {
       const board = store.get('gh.board') || [];
       if (!board.length) { body.innerHTML = '<p class="empty">Finish a game to get on the leaderboard.</p>'; return; }
@@ -3866,7 +3943,9 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   /* ================= Music ================= */
   // Two sources: songs generated with Web Audio (nothing to download), or the three mp3 tracks.
   const TRACKS = { lobby: 'audio/thirty_seconds_out.mp3', peace: 'audio/the_tightening_grip.mp3', war: 'audio/point_of_impact.mp3' };
-  const music = { els: {}, cur: null, settings: null, unlocked: false };
+  // hold: set when something else on the device takes over the audio (a call, another app, the system). While it is set
+  // all of the game's sound stays off until that audio ends, or the player turns music back on in the game or in Settings.
+  const music = { els: {}, cur: null, settings: null, unlocked: false, hold: false };
   function musicSettings() {
     if (!music.settings) music.settings = Object.assign({ on: true, vol: 0.6, mode: 'gen' }, store.get('gh.music') || {});
     return music.settings;
@@ -3876,11 +3955,37 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   // The lobby song plays in the menus and while founding your nation, the war song while you're at war, the peace song otherwise.
   function wantedTrack() { if (!inGame()) return 'lobby'; return enemiesOf(nations[PLAYER]).length ? 'war' : 'peace'; }
   function trackEl(k) {
-    if (!music.els[k]) { const a = new Audio(TRACKS[k]); a.loop = true; music.els[k] = a; }
+    if (!music.els[k]) {
+      const a = new Audio(TRACKS[k]); a.loop = true; music.els[k] = a;
+      // A pause we didn't ask for means the system or another app took the sound.
+      a.addEventListener('pause', () => { if (a._mine) { a._mine = false; return; } if (music.unlocked && musicSettings().on) holdMusic('other'); });
+    }
     return music.els[k];
   }
-  function stopTracks(keep) { for (const [k, a] of Object.entries(music.els)) if (k !== keep && !a.paused) { a.pause(); a.currentTime = 0; } }
-  function stopMusic() { for (const a of Object.values(music.els)) a.pause(); stopGen(); }
+  const quiet = (a) => { if (!a.paused) { a._mine = true; a.pause(); } };
+  function stopTracks(keep) { for (const [k, a] of Object.entries(music.els)) if (k !== keep && !a.paused) { quiet(a); a.currentTime = 0; } }
+  function stopMusic() { for (const a of Object.values(music.els)) quiet(a); stopGen(); }
+  // Music stays off while the game is paused or while other audio has the speakers.
+  const musicBlocked = () => !!music.hold || (state.screen === 'game' && state.paused);
+  function holdMusic(why) {
+    if (music.hold) return;
+    music.hold = why;
+    stopMusic();
+    syncMusicButtons();
+    toast('Other audio is playing, so the game went quiet. Turn the music on from the game or Settings to bring it back.', 'info');
+  }
+  function releaseHold() {
+    music.hold = false;
+    if (synth.ctx && synth.ctx.state !== 'running') synth.ctx.resume().catch(() => {});
+    syncMusicButtons();
+    startMusic();
+  }
+  // Safari reports when a call or another app interrupts the page's audio, and when it hands it back.
+  if (navigator.audioSession) navigator.audioSession.addEventListener('statechange', () => {
+    const st = navigator.audioSession.state;
+    if (st === 'interrupted') holdMusic('system');
+    else if (st === 'active' && music.hold === 'system') releaseHold();
+  });
   function applyMusicVol() {
     const v = musicSettings().vol;
     if (synth.music) synth.music.gain.value = v * 0.6;
@@ -3889,6 +3994,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   // Browsers only allow sound after the viewer interacts, so this runs on the first tap or key press.
   function startMusic() {
     if (!music.unlocked || !musicSettings().on) return;
+    if (musicBlocked()) { stopMusic(); return; }
     const k = wantedTrack();
     if (musicSettings().mode === 'tracks') {
       stopGen();
@@ -3908,6 +4014,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
 
   function toggleMusic() {
     const st = musicSettings();
+    if (music.hold) { st.on = true; saveMusicSettings(); releaseHold(); return; }   // turning it on overrides the other audio
     st.on = !st.on;
     saveMusicSettings();
     if (st.on) startMusic(); else stopMusic();
@@ -3921,7 +4028,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     startMusic();
   }
   function syncMusicButtons() {
-    const on = musicSettings().on;
+    const on = musicSettings().on && !music.hold;
     const b = $('btn-music');
     if (b) { b.classList.toggle('active', !on); b.title = on ? 'Music on (M)' : 'Music off (M)'; b.setAttribute('aria-label', b.title); b.querySelector('.slash').style.display = on ? 'none' : ''; }
     const t = $('set-music'); if (t) t.checked = on;
@@ -3940,6 +4047,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       if (!AC) return null;
       const c = new AC(), comp = c.createDynamicsCompressor();
       comp.connect(c.destination);
+      c.onstatechange = () => { if (c.state === 'interrupted') holdMusic('system'); else if (c.state === 'running' && music.hold === 'system') releaseHold(); };
       synth.music = c.createGain(); synth.music.gain.value = musicSettings().vol * 0.6; synth.music.connect(comp);
       synth.sfx = c.createGain(); synth.sfx.gain.value = 0.7; synth.sfx.connect(comp);
       const len = c.sampleRate * 2, buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
@@ -4086,7 +4194,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   };
   const sfxLast = {};
   function sfxPlay(name, vol = 1) {
-    if (!sfxSettings().on) return;
+    if (!sfxSettings().on || music.hold) return;
     const c = audioCtx();
     if (!c) return;
     const now = performance.now();
@@ -4902,7 +5010,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   $('update-btn').addEventListener('click', applyUpdate);
   syncAssist(); renderFlag(); syncChestBtn();
   checkUpdate(); setInterval(checkUpdate, 4 * 60 * 1000);
-  $('set-music').addEventListener('change', (e) => { if (e.target.checked !== musicSettings().on) toggleMusic(); });
+  $('set-music').addEventListener('change', (e) => { if (e.target.checked !== (musicSettings().on && !music.hold)) toggleMusic(); });
   $('set-vol').addEventListener('input', (e) => {
     musicSettings().vol = +e.target.value / 100;
     saveMusicSettings();
