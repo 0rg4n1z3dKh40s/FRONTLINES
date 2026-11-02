@@ -441,7 +441,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     <button class="close" id="build-close" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div id="build-body"></div>
-  <p class="note">Pick a building, then tap your land to place it. Ones marked <b>Needs power</b> only work inside a factory or power plant ring.</p>
+  <p class="note">Pick a building, then tap your land to place it. Ones marked <b>Needs power</b> only work inside a power plant's circle, wired up by power lines.</p>
 </div>
 
 <div id="sheet" class="card glass" hidden>
@@ -455,8 +455,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
 <nav class="dock glass" aria-label="Build bar">
   <button id="btn-build" title="Build (B)"><svg class="i" viewBox="0 0 24 24"><path d="M14.5 3.5l6 6-2.5 2.5-6-6zM12 6l-9 9 3 3 9-9M5 19l-2 2"/></svg><span>Build</span></button>
   <span class="sep"></span>
-  <button id="btn-home" title="Go to my land"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Home</span></button>
-  <button id="btn-out" title="Zoom all the way out"><svg class="i" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>World</span></button>
+  <button id="btn-home" title="Zoom to fit my land"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Home</span></button>
 </nav>
 
 <div id="title" class="overlay">
@@ -570,8 +569,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     <div class="field"><span class="lbl">Sound effects</span>
       <div class="radios"><label><input type="checkbox" id="set-sfx"> Sound effects</label></div></div>
     <div class="field"><span class="lbl">Background assistant</span>
-      <div class="radios"><label><input type="checkbox" id="set-assist"> Place basic buildings and make small upgrades for me</label></div>
-      <p class="note" style="margin:0">It never makes big purchases, never attacks, and keeps a gold reserve.</p></div>
+      <div class="radios"><label><input type="checkbox" id="set-assist"> Spend my money expanding my land for me (never touches my buildings)</label></div>
+      <p class="note" style="margin:0">It claims free land on your border with your money. It never builds, upgrades, demolishes or attacks.</p></div>
     <div class="field"><span class="lbl">Your flag</span>
       <input type="file" id="set-flag" accept="image/*">
       <p class="note" id="flag-msg" style="margin:0">An image. It is shrunk and goes with your save and your cloud save. Erasing all data clears it.</p>
@@ -610,14 +609,14 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       <dt>Start</dt><dd>Tap any land and press <b>Found nation here</b>. 49 rival nations appear around the world.</dd>
       <dt>Grow</dt><dd>Tap anywhere on a nation to see everything about it: people, land, buildings, bombs, wars and allies. Tap your land and hold <b>Expand</b>, or tap free land on your border and hold <b>Claim</b>. Tap a neighbour's land, choose how many of your people to send (1% to 100%), and press <b>Invade</b>: your troops sweep in as a wave and their number counts down as they fight. It's all about population: each sector costs as many troops as the people defending it, so if you send more troops than they have people, you win. A nation you invade rarely invades back, and almost never if you are more than twice its size (watch its <b>Scared of you</b> bar). But a nation more than twice your size is slow to get through, and your troops keep bleeding away while you try, so a giant can stop you cold. Sending 100% leaves your own land empty. Every purchase costs a little more than the last one, for every nation.</dd>
       <dt>Build</dt><dd>Pick a building from the bottom bar, then tap your land to place it. Tap it later to upgrade it.
-        Press <b>Build</b> (or B) to see everything: factories, power plants, farms, banks, cities, barracks, forts, bunkers, silos, radars, airbases, spy HQs, ports, research labs, hospitals and monuments. <b>Factories</b> and <b>power plants</b> power everything in their ring: anything marked <b>Needs power</b> does nothing outside one. <b>Barracks</b>, <b>forts</b> and <b>farms</b> work anywhere. A <b>City</b> is expensive but doubles your income and doubles the people around it.</dd>
-      <dt>Bombs</dt><dd>Buy bombs at a silo; higher silo levels unlock stronger ones: missile, toxic bomb, firestorm, dirty bomb, nuke and finally the MIRV, which splits into many nukes over the target. Each bomb has its own range, and upgrading adds more. To fire, tap enemy land and pick a bomb that can reach. A bomb shot down by a radar or ship does no damage at all. Bombs that land leave toxic fallout that kills people and blocks land until it fades, or until you pay for a cleanup.</dd>
-      <dt>Sea</dt><dd><b>Scout ships</b> carry a small radar that spots and shoots down some bombs. <b>Transports</b> let you claim or invade any coast they are parked next to. Tap a ship, then tap the ocean to sail.</dd>
+        Press <b>Build</b> (or B) to see everything. You start with a <b>power plant</b> and a <b>factory</b>. <b>Power plants</b> are the only source of power: they run visible power lines to every building inside their circle, and upgrading a plant makes the circle bigger. Anything marked <b>Needs power</b>, factories included, does nothing outside one. <b>Factories</b> earn money and ship supplies down the lines as coloured dots: red troops to forts, barracks and army bases (they become people there), orange munitions to silos (they add up to free missiles), gold money to cities and banks. Zoom in to see how much each factory gave. Military: <b>army bases</b> and a <b>command center</b> make your army stronger, <b>forts</b> make invaders pay more troops, <b>SAM sites</b> and <b>radar stations</b> shoot down bombs, <b>supply depots</b> make factories ship more, and a <b>naval base</b> builds destroyers. A <b>City</b> is expensive but doubles your income and doubles the people around it.</dd>
+      <dt>Bombs</dt><dd>Buy bombs at a silo; higher silo levels unlock stronger ones: missile, cruise missile, toxic bomb, bunker buster (ignores bunkers), firestorm, EMP bomb (fries buildings), dirty bomb, thermobaric bomb, nuke, ICBM (reaches across the world), hydrogen bomb, the MIRV (splits into many nukes over the target) and the hypersonic missile (fast and hard to shoot down). Each bomb has its own range, and upgrading adds more. To fire, tap enemy land and pick a bomb that can reach. A bomb shot down by a radar, SAM site or warship does no damage at all. Bombs that land leave toxic fallout that kills people and blocks land until it fades, or until you pay for a cleanup.</dd>
+      <dt>Sea</dt><dd><b>Scout ships</b> carry a small radar that spots and shoots down some bombs. <b>Transports</b> let you claim or invade any coast they are parked next to. <b>Destroyers</b>, built at a naval base, shoot down most bombs near them. Tap a ship, then tap the ocean to sail.</dd>
       <dt>Peace</dt><dd>Attacking a nation starts a war. Tap their land to <b>offer a ceasefire</b>; nations that are losing usually say yes. Wars also end on their own after a long quiet spell.</dd>
-      <dt>Allies</dt><dd>Tap a nation you are at peace with and choose <b>Propose alliance</b>. Allies are combined with you: their factories and power plants power your buildings (and yours power theirs), you can build on each other's land, and you can invade anyone they border. Whenever either of you goes to war, the other joins and automatically sends <b>10%</b> of their people to help. Ending the alliance undoes all of it: buildings on each other's land are taken down.</dd>
+      <dt>Allies</dt><dd>Tap a nation you are at peace with and choose <b>Propose alliance</b>. Allies are combined with you: their power plants power your buildings (and yours power theirs), you can build on each other's land, and you can invade anyone they border. Whenever either of you goes to war, the other joins and automatically sends <b>10%</b> of their people to help. Ending the alliance undoes all of it: buildings on each other's land are taken down.</dd>
       <dt>Difficulty</dt><dd><b>Easy</b>: rivals mostly expand, and the odd bomb is small. <b>Medium</b>: a calm start, then wars. <b>Hard</b>: constant wars and frequent bombing. <b>Extreme</b> unlocks after you win on Hard. Every game starts gentle: early on rivals pick on you less, send smaller armies, bomb you less and rest between attacks, then the pressure builds over the years (check <b>Rival pressure</b> in the Overview). Only one rival army can invade you at a time. Each level also learns from your own normal games (not quests or custom games): win a lot and it gets a little tougher, lose a lot and it eases off. This stays on your device.</dd>
       <dt>Win</dt><dd>Own 98% of the world, or defeat every rival. A nation that drops to 2% of its biggest size falls.</dd>
-      <dt>Controls</dt><dd>Drag to move, pinch or scroll to zoom. Esc or P pauses and saves. M turns the music on or off.</dd>
+      <dt>Controls</dt><dd>Drag to move, pinch or scroll to zoom. <b>Home</b> zooms to fit your nation. The robot button turns the assistant on or off: it spends your money expanding your land and never touches your buildings. Esc or P pauses and saves. M turns the music on or off.</dd>
     </dl>
     <button class="btn ghost" id="howto-tut">Play the tutorial round</button>
     <button class="btn gold" id="howto-back">Got it</button>
@@ -692,9 +691,10 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const RADAR_RANGE = (l) => Math.round(7 + 0.3 * l);
   const RADAR_CHANCE = (l) => Math.min(0.95, 0.55 + 0.01 * l + 0.05 * step(l, 10, 25));
   const PORT_SHIPS = (l) => 1 + Math.floor(l / 3) + 2 * step(l, 25, 50);
-  const FACTORY_RANGE = (l) => Math.round(14 + 0.4 * l);   // every building except barracks must sit inside a factory's range to work
+  const NAVAL_SHIPS = (l) => 3 + Math.floor(l / 3) + 2 * step(l, 25, 50);
   const CITY_RADIUS = (l) => Math.min(24, 4 + Math.floor(l / 3) + 2 * step(l, 25, 50, 100));
-  const PLANT_RANGE = (l) => Math.round((20 + 0.5 * l) * (1 + 0.25 * step(l, 10, 25, 50)));
+  // Power plants are the only source of power: everything that needs power (factories included) must sit inside a plant's circle.
+  const PLANT_RANGE = (l) => Math.round((10 + 0.4 * l) * (1 + 0.25 * step(l, 10, 25, 50)));
   const FARM_R = (l) => 3 + Math.floor(l / 6) + step(l, 25, 50);
   const BANK_PCT = (l) => 0.08 + 0.005 * l + 0.05 * step(l, 10, 25, 50);
   const LAB_RATE = (l) => +((0.5 + 0.1 * l) * (1 + 0.25 * step(l, 10, 25, 50, 100))).toFixed(1);
@@ -704,12 +704,21 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const FORT_R = (l) => 3 + Math.floor(l / 8), FORT_BONUS = (l) => 0.4 + 0.02 * l;
   const BUNKER_R = (l) => 3 + Math.floor(l / 8), BUNKER_SHIELD = (l) => Math.min(0.9, 0.35 + 0.012 * l + 0.04 * step(l, 10, 25, 50));
   const AIR_R = (l) => 6 + Math.floor(l * 0.3) + 3 * step(l, 10, 25, 50);
+  const BASE_R = (l) => 4 + Math.floor(l / 6) + step(l, 25, 50), BASE_ATK = (l) => 0.03 + 0.002 * l + 0.02 * step(l, 10, 25, 50);
+  const CMD_ATK = (l) => 0.05 + 0.003 * l + 0.03 * step(l, 10, 25, 50);
+  const ARMY_CAP = 0.6;               // army bases and command centres together add at most +60% army strength
+  const DEPOT_BOOST = (l) => 0.5 + 0.02 * l;   // factories on the same power grid ship this much more
+  const SAM_R = (l) => 4 + Math.floor(l / 5), SAM_CHANCE = (l) => Math.min(0.97, 0.7 + 0.008 * l + 0.03 * step(l, 10, 25));
   const BIG_BUILDS = new Set(['factory', 'city', 'spy', 'silo', 'lab']);   // late-game money sinks: up to level 100, everything else stops at 50
   const maxLevel = (t) => (BIG_BUILDS.has(t) ? 100 : 50);
   // The next level that changes something big, shown in the building panel.
   const MILESTONES = {
     factory: [[10, '+25% income'], [25, '+25% income'], [50, '+25% income'], [100, '+25% income']],
-    silo: [[2, 'toxic bombs'], [4, 'firestorm bombs'], [6, 'dirty bombs'], [8, 'nukes'], [15, 'MIRV warheads'], [30, 'spy bombs'], [40, 'spy warheads']],
+    silo: [[1, 'cruise missiles'], [2, 'toxic bombs'], [3, 'bunker busters'], [4, 'firestorm bombs'], [5, 'EMP bombs'], [6, 'dirty bombs'], [7, 'thermobaric bombs'], [8, 'nukes'], [10, 'ICBMs'], [12, 'hydrogen bombs'], [15, 'MIRV warheads'], [20, 'hypersonic missiles'], [30, 'spy bombs'], [40, 'spy warheads']],
+    base: [[10, 'stronger army'], [25, 'stronger army, wider reach'], [50, 'stronger army, wider reach']],
+    command: [[10, 'stronger army'], [25, 'stronger army'], [50, 'stronger army']],
+    sam: [[10, 'surer shots'], [25, 'surer shots']],
+    navalbase: [[25, '+2 berths'], [50, '+2 berths']],
     port: [[25, '+2 ship berths'], [50, '+2 ship berths']],
     city: [[25, 'wider reach'], [50, 'wider reach'], [100, 'wider reach']],
     plant: [[10, '+25% range'], [25, '+25% range'], [50, '+25% range']],
@@ -736,18 +745,23 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const SHIP_SCAN_R = 6;
   const nextMilestone = (t, l) => (MILESTONES[t] || []).find((m) => m[0] > l);
   const BUILD = {
-    factory:  { name: 'Factory',      cost: 400, tech: 100, cat: 'eco', radius: FACTORY_RANGE, ring: '226,181,75', info: (l) => `+${money(FACTORY_INCOME(l))} a month · powers buildings within ${FACTORY_RANGE(l)} sectors` },
-    barracks: { name: 'Barracks',     cost: 500, tech: 100, free: true, cat: 'mil', info: (l) => `Level ${l} · fights are decided by population only, so barracks don't change battles right now` },
-    silo:     { name: 'Missile Silo', cost: 800, tech: 110, cat: 'mil', info: (l) => `Holds ${SILO_CAP(l)} bombs · ${BOMB_TYPES.filter((t) => BOMBS[t].siloLevel <= l).map((t) => BOMBS[t].name.toLowerCase()).join(', ')} · range ×${SILO_RANGE(l).toFixed(2)}` },
-    radar:    { name: 'Radar',        cost: 700, tech: 110, cat: 'mil', info: (l) => `${Math.round(RADAR_CHANCE(l) * 100)}% chance to shoot down bombs within ${RADAR_RANGE(l)} sectors` },
+    plant:    { name: 'Power Plant',  cost: 900,  tech: 100, free: true, cat: 'eco', radius: PLANT_RANGE, ring: '250,204,21', info: (l) => `Runs power lines to every building within ${PLANT_RANGE(l)} sectors · nothing else works without power` },
+    factory:  { name: 'Factory',      cost: 400, tech: 100, cat: 'eco', info: (l) => `+${money(FACTORY_INCOME(l))} a month · ships supplies down the power lines: troops to forts and bases, munitions to silos, money to cities and banks` },
+    barracks: { name: 'Barracks',     cost: 500, tech: 100, free: true, cat: 'mil', info: (l) => `Level ${l} · trains troops: factory supplies sent here become people nearby` },
+    silo:     { name: 'Missile Silo', cost: 800, tech: 110, cat: 'mil', info: (l) => `Holds ${SILO_CAP(l)} bombs · ${BOMB_TYPES.filter((t) => BOMBS[t].siloLevel <= l).map((t) => lowName(BOMBS[t].name)).join(', ')} · range ×${SILO_RANGE(l).toFixed(2)} · factory munitions build free missiles` },
+    radar:    { name: 'Radar Station', cost: 700, tech: 110, cat: 'mil', info: (l) => `${Math.round(RADAR_CHANCE(l) * 100)}% chance to shoot down bombs within ${RADAR_RANGE(l)} sectors` },
+    sam:      { name: 'SAM Site',     cost: 1000, tech: 112, cat: 'mil', radius: SAM_R, ring: '125,211,252', info: (l) => `Surface-to-air missiles: ${Math.round(SAM_CHANCE(l) * 100)}% chance to shoot down bombs within ${SAM_R(l)} sectors` },
     port:     { name: 'Port',         cost: 600, tech: 100, coastal: true, cat: 'other', info: (l) => `Docks up to ${PORT_SHIPS(l)} ship${PORT_SHIPS(l) > 1 ? 's' : ''}` },
+    navalbase: { name: 'Naval Base',  cost: 2500, tech: 115, coastal: true, cat: 'mil', info: (l) => `Docks up to ${NAVAL_SHIPS(l)} ships and builds destroyers` },
     city:     { name: 'City',         cost: 5000, tech: 100, step: 0.6, cat: 'eco', radius: CITY_RADIUS, ring: '165,180,252', info: (l) => `Doubles your base income · people double within ${CITY_RADIUS(l)} sectors` },
-    plant:    { name: 'Power Plant',  cost: 900,  tech: 100, free: true, cat: 'eco', radius: PLANT_RANGE, ring: '226,181,75', info: (l) => `Powers buildings within ${PLANT_RANGE(l)} sectors · earns nothing itself` },
     farm:     { name: 'Farm',         cost: 300,  tech: 100, free: true, cat: 'eco', radius: FARM_R, ring: '134,239,172', info: (l) => `People grow to 30% more within ${FARM_R(l)} sectors` },
     bank:     { name: 'Bank',         cost: 1500, tech: 105, cat: 'eco', info: (l) => `+${Math.round(BANK_PCT(l) * 100)}% income (banks add up to +100%)` },
-    fort:     { name: 'Fort',         cost: 700,  tech: 100, free: true, cat: 'mil', radius: FORT_R, ring: '236,90,80', info: (l) => `Covers ${FORT_R(l)} sectors · fights are decided by population only, so forts don't change battles right now` },
-    bunker:   { name: 'Bunker',       cost: 1100, tech: 115, cat: 'mil', radius: BUNKER_R, ring: '148,163,184', info: (l) => `Bombs kill ${Math.round(BUNKER_SHIELD(l) * 100)}% fewer people within ${BUNKER_R(l)} sectors and can't flatten land there` },
-    airbase:  { name: 'Airbase',      cost: 1600, tech: 120, cat: 'mil', radius: AIR_R, ring: '125,211,252', info: (l) => `Claim or invade any land within ${AIR_R(l)} sectors, even across the sea` },
+    depot:    { name: 'Supply Depot', cost: 900,  tech: 100, cat: 'mil', info: (l) => `Factories on the same power grid ship ${Math.round(DEPOT_BOOST(l) * 100)}% more troops and munitions` },
+    fort:     { name: 'Fort',         cost: 700,  tech: 100, free: true, cat: 'mil', radius: FORT_R, ring: '236,90,80', info: (l) => `Invaders need ${Math.round(FORT_BONUS(l) * 50)}% more troops within ${FORT_R(l)} sectors · factory troops sent here reinforce the land around it` },
+    base:     { name: 'Army Base',    cost: 2000, tech: 110, cat: 'mil', radius: BASE_R, ring: '236,90,80', info: (l) => `Your army +${Math.round(BASE_ATK(l) * 100)}% stronger (bases and command add up to +${ARMY_CAP * 100}%) · people grow faster within ${BASE_R(l)} sectors` },
+    command:  { name: 'Command Center', cost: 4000, tech: 120, cat: 'mil', info: (l) => `Your army +${Math.round(CMD_ATK(l) * 100)}% stronger (only your best command center counts)` },
+    bunker:   { name: 'Fallout Bunker', cost: 1100, tech: 115, cat: 'mil', radius: BUNKER_R, ring: '148,163,184', info: (l) => `Bombs kill ${Math.round(BUNKER_SHIELD(l) * 100)}% fewer people within ${BUNKER_R(l)} sectors and can't flatten land there` },
+    airbase:  { name: 'Air Force Base', cost: 1600, tech: 120, cat: 'mil', radius: AIR_R, ring: '125,211,252', info: (l) => `Claim or invade any land within ${AIR_R(l)} sectors, even across the sea` },
     spy:      { name: 'Spy HQ',       cost: 1400, tech: 115, cat: 'mil', radius: SPY_R, ring: '196,181,253', info: (l) => `Your army +${(SPY_ATK(l) * 100).toFixed(1)}% stronger · cities +${(SPY_CITY(l) * 100).toFixed(1)}% income and people · tap a rival for more intel the higher this goes (range ${SPY_R(l)})` },
     sradar:   { name: 'Spy Radar',    cost: 6000, tech: 130, cat: 'mil', radius: SRADAR_R, ring: '196,181,253', need: 'spymax', info: (l) => `Finds hidden ${HIDDEN_ORDER.slice(0, SRADAR_KINDS(l)).join(', ')} within ${SRADAR_R(l)} sectors${l >= STEALTH_SEE ? ' · sees stealth weapons in flight' : ''}` },
     lab:      { name: 'Research Lab', cost: 1200, tech: 100, cat: 'other', info: (l) => `+${LAB_RATE(l)} tech a month on top of normal research` },
@@ -759,22 +773,30 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     scout:     { name: 'Scout ship', cost: 500, range: 6, chance: 0.5, info: 'Small radar: spots incoming bombs and shoots some down.' },
     transport: { name: 'Transport',  cost: 700, range: 0, chance: 0,   info: 'Carries troops: park it next to any coast to claim or invade there.' },
     spy:       { name: 'Spy ship',   cost: 6000, range: 0, chance: 0,  info: 'Sails unseen and finds hidden rival buildings anywhere it passes. Needs a Spy HQ.' },
+    destroyer: { name: 'Destroyer',  cost: 1800, range: 9, chance: 0.75, info: 'Warship with strong air defense: shoots down most bombs that fly near it. Built at a Naval Base.' },
   };
   const SHIP_SPEED = 3;   // sectors per second
   // `look` is the blast and flight style it borrows from the three hand-drawn bombs.
   const BOMBS = {
     missile:   { name: 'Missile',    cost: 600,   range: 30, siloLevel: 0,  blast: 1.6, kill: 0.6,  flatten: 1.0, toxR: 1.2, toxM: 4,  look: 'missile' },
+    cruise:    { name: 'Cruise Missile', cost: 800, range: 45, siloLevel: 1, blast: 1.9, kill: 0.65, flatten: 1.2, toxR: 1.2, toxM: 4, look: 'missile' },
     toxic:     { name: 'Toxic bomb', cost: 900,   range: 50, siloLevel: 2,  blast: 2.2, kill: 0.35, flatten: 0,   toxR: 2.8, toxM: 16, look: 'toxic' },
+    buster:    { name: 'Bunker Buster', cost: 1300, range: 40, siloLevel: 3, blast: 1.8, kill: 0.75, flatten: 1.4, toxR: 1, toxM: 3, look: 'missile', pierce: true, info: 'ignores bunkers' },
     firestorm: { name: 'Firestorm',  cost: 1600,  range: 62, siloLevel: 4,  blast: 3.0, kill: 0.7,  flatten: 1.7, toxR: 1.6, toxM: 6,  look: 'missile' },
+    emp:       { name: 'EMP Bomb',   cost: 1800,  range: 60, siloLevel: 5,  blast: 4.0, kill: 0.03, flatten: 0,   toxR: 0,   toxM: 0,  look: 'emp', emp: true, info: 'fries every building in the blast, barely hurts people' },
     dirty:     { name: 'Dirty bomb', cost: 2100,  range: 75, siloLevel: 6,  blast: 3.4, kill: 0.5,  flatten: 0.6, toxR: 5.2, toxM: 34, look: 'toxic' },
+    thermo:    { name: 'Thermobaric Bomb', cost: 2500, range: 70, siloLevel: 7, blast: 3.8, kill: 0.85, flatten: 2.0, toxR: 1.5, toxM: 5, look: 'missile' },
     nuke:      { name: 'Nuke',       cost: 3000,  range: 90, siloLevel: 8,  blast: 4.2, kill: 0.9,  flatten: 2.6, toxR: 4.2, toxM: 28, look: 'nuke' },
-    spymissile: { name: 'Spy bomb',  cost: 9000,  range: 40, siloLevel: 30, blast: 1.6, kill: 0.6,  flatten: 1.0, toxR: 1.2, toxM: 4,  look: 'missile', stealth: true },
+    icbm:      { name: 'ICBM',       cost: 5000,  range: 220, siloLevel: 10, blast: 4.4, kill: 0.9, flatten: 2.8, toxR: 4.4, toxM: 30, look: 'nuke', info: 'a nuke that reaches across the world' },
+    hbomb:     { name: 'Hydrogen Bomb', cost: 8000, range: 120, siloLevel: 12, blast: 5.6, kill: 0.95, flatten: 3.6, toxR: 6, toxM: 40, look: 'nuke' },
     mirv:      { name: 'MIRV',       cost: 14000, range: 110, siloLevel: 15, blast: 4.2, kill: 0.9,  flatten: 2.6, toxR: 4.2, toxM: 28, look: 'nuke', mirv: 'nuke', info: 'splits into nukes over the target' },
+    hyper:     { name: 'Hypersonic Missile', cost: 6000, range: 150, siloLevel: 20, blast: 2.4, kill: 0.75, flatten: 1.6, toxR: 1.2, toxM: 4, look: 'missile', fast: true, info: 'three times as fast, radars hit it half as often' },
+    spymissile: { name: 'Spy bomb',  cost: 9000,  range: 40, siloLevel: 30, blast: 1.6, kill: 0.6,  flatten: 1.0, toxR: 1.2, toxM: 4,  look: 'missile', stealth: true },
     spymirv:   { name: 'Spy warhead', cost: 45000, range: 110, siloLevel: 40, blast: 4.2, kill: 0.9, flatten: 2.6, toxR: 4.2, toxM: 28, look: 'nuke', mirv: 'nuke', stealth: true },
   };
   const BOMB_TYPES = Object.keys(BOMBS);
   // 0 = plain, 1 = off on Easy (toxic bombs and up), 2 = also held back until nukes are allowed (nuke and up)
-  const BOMB_TIER = { missile: 0, toxic: 1, firestorm: 1, dirty: 1, nuke: 2, mirv: 2, spymissile: 0, spymirv: 2 };
+  const BOMB_TIER = { missile: 0, cruise: 0, toxic: 1, buster: 0, firestorm: 1, emp: 0, dirty: 1, thermo: 1, nuke: 2, icbm: 2, hbomb: 2, mirv: 2, hyper: 0, spymissile: 0, spymirv: 2 };
   const ICONS = {
     factory: 'M3 21V10l6 4V10l6 4V5h4v16zM3 21h18',
     barracks: 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z',
@@ -793,6 +815,11 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     lab: 'M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3M7.5 15h9',
     hospital: 'M4 4h16v16H4zM12 8v8M8 12h8',
     monument: 'M10.5 21l.8-15L12 3l.7 3 .8 15zM7 21h10',
+    sam: 'M4 20h16M7 20l3-6h4l3 6M10 14l6-10M14 14l6-8',
+    navalbase: 'M12 3v10M8 6h8M3 15h18l-3 5H6zM12 13v2',
+    depot: 'M3 9l9-5 9 5v11H3zM8 20v-6h8v6M3 9h18',
+    base: 'M4 21V8l8-5 8 5v13M9 21v-5h6v5M8 11h2M14 11h2',
+    command: 'M5 21V4M5 4h12l-3 4 3 4H5M3 21h6',
   };
 
   const PLAYER_DEF = { name: 'Empire of Nova', color: '#818cf8' };
@@ -813,6 +840,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const pick = (arr) => arr[(rnd() * arr.length) | 0];
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const lerp = (a, b, t) => a + (b - a) * t;
+  const lowName = (nm) => (/^[A-Z]{2,}/.test(nm) ? nm.replace(/ [A-Z].*/, (w) => w.toLowerCase()) : nm.toLowerCase());   // "EMP Bomb" → "EMP bomb", "Nuke" → "nuke"
   const money = (n) => '$' + Math.floor(n).toLocaleString('en-US');
   const compactFmt = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 });
   const compact = (n) => compactFmt.format(n);
@@ -845,7 +873,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   let landCount = 0;
   const cityBoost = new Uint8Array(N);
   // Area effects, by building level, on the owner's own land.
-  const fortCover = new Uint8Array(N), bunkerCover = new Uint8Array(N), farmCover = new Uint8Array(N), healCover = new Uint8Array(N);
+  const fortCover = new Uint8Array(N), bunkerCover = new Uint8Array(N), farmCover = new Uint8Array(N), healCover = new Uint8Array(N), baseCover = new Uint8Array(N);
   const COAST = [];
   function buildWorld() {
     const bits = Uint8Array.from(atob(LAND_MASK), (c) => c.charCodeAt(0));
@@ -1023,13 +1051,13 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       style: profile ? profile.style : 'You', skill: profile ? profile.skill : 1, aggression: profile ? profile.aggression : 0,
       alive: true, buys: {}, gold: START_GOLD, tech: 100, peak: 0, lastHitBy: null, milestone: 0,
       tiles: 0, cleanTiles: 0, pop: 0, income: 0, frontier: [], enemyFront: [], tileList: [], blds: [],
-      barracks: 0, factoryInc: 0, cities: 0, bankPct: 0, labRate: 0, techAcc: 0, monLevel: 0, spyLevel: 0, seesStealth: false, hospitals: 0, health: 1, team: 0, path: null, sx: 0, sy: 0, c0: 0, c1: 0, r0: 0, r1: 0,
+      barracks: 0, factoryInc: 0, cities: 0, bankPct: 0, labRate: 0, techAcc: 0, monLevel: 0, spyLevel: 0, seesStealth: false, armyBonus: 0, cmdBonus: 0, hospitals: 0, health: 1, team: 0, path: null, sx: 0, sy: 0, c0: 0, c1: 0, r0: 0, r1: 0,
     };
   }
 
   function resetWorld() {
     for (const r of regions) { r.owner = null; r.population = 0; r.toxic = 0; r.building = null; }
-    buildings = []; ships = []; missiles = []; warheads = []; planes = []; found = new Set(); spyScans = 0; spyFound = 0; booms = []; fx = [];
+    buildings = []; ships = []; missiles = []; warheads = []; planes = []; found = new Set(); spyScans = 0; spyFound = 0; booms = []; fx = []; flows = []; flowTags = [];
     wars.clear(); truces.clear(); alliances.clear(); attacks = []; attackSig = ''; if ($('attacks')) { $('attacks').hidden = true; $('attacks').innerHTML = ''; }
     gameClock = 0; nextUid = 1;
     territoryDirty = true; toxicDirty = true;
@@ -1098,7 +1126,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   function tally() {
     for (const n of Object.values(nations)) {
       n.tiles = 0; n.cleanTiles = 0; n.pop = 0; n.frontier.length = 0; n.enemyFront.length = 0; n.tileList.length = 0; n.blds.length = 0;
-      n.sx = 0; n.sy = 0; n.c0 = COLS; n.c1 = 0; n.r0 = ROWS; n.r1 = 0; n.barracks = 0; n.factoryInc = 0; n.cities = 0; n.bankPct = 0; n.labRate = 0; n.monLevel = 0; n.hospitals = 0; n.spyLevel = 0; n.seesStealth = false;
+      n.sx = 0; n.sy = 0; n.c0 = COLS; n.c1 = 0; n.r0 = ROWS; n.r1 = 0; n.barracks = 0; n.factoryInc = 0; n.cities = 0; n.bankPct = 0; n.labRate = 0; n.monLevel = 0; n.hospitals = 0; n.spyLevel = 0; n.seesStealth = false; n.armyBonus = 0; n.cmdBonus = 0;
     }
     for (let i = 0; i < N; i++) {
       const r = regions[i];
@@ -1115,10 +1143,10 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         else if (o.owner !== r.owner) n.enemyFront.push(j);
       }
     }
-    // Power network: a building works only inside a factory or power plant range (barracks always work).
-    // Allies share their power: your buildings run off their factories and theirs off yours.
-    const facs = buildings.filter((b) => b.type === 'factory' || b.type === 'plant');
-    cityBoost.fill(0); fortCover.fill(0); bunkerCover.fill(0); farmCover.fill(0); healCover.fill(0);
+    // Power network: a building works only inside a power plant's circle (barracks, forts, farms and monuments always work).
+    // Allies share their power: your buildings run off their plants and theirs off yours.
+    const plants = buildings.filter((b) => b.type === 'plant');
+    cityBoost.fill(0); fortCover.fill(0); bunkerCover.fill(0); farmCover.fill(0); healCover.fill(0); baseCover.fill(0);
     const paint = (arr, b, R) => {
       const c = regions[b.idx];
       for (let dr = -R; dr <= R; dr++) for (let dc = -R; dc <= R; dc++) {
@@ -1131,11 +1159,13 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     for (const b of buildings) {
       const n = nations[b.owner];
       if (!n) continue;
-      b.on = b.type === 'factory' || !!BUILD[b.type].free || facs.some((f) => onSide(f.owner, b.owner) && tileDist(f.idx, b.idx) <= (f.type === 'plant' ? PLANT_RANGE : FACTORY_RANGE)(f.level));
+      b.on = !!BUILD[b.type].free || plants.some((f) => onSide(f.owner, b.owner) && tileDist(f.idx, b.idx) <= PLANT_RANGE(f.level));
       n.blds.push(b);
       if (b.type === 'barracks') n.barracks += (b.level + 1) * 0.05;
-      if (b.type === 'factory') n.factoryInc += FACTORY_INCOME(b.level);
+      if (b.type === 'factory' && b.on) n.factoryInc += FACTORY_INCOME(b.level);
       if (b.on) {
+        if (b.type === 'base') { n.armyBonus += BASE_ATK(b.level); paint(baseCover, b, BASE_R(b.level)); }
+        else if (b.type === 'command') n.cmdBonus = Math.max(n.cmdBonus, CMD_ATK(b.level));
         if (b.type === 'radar' && b.level >= STEALTH_SEE) n.seesStealth = true;
         if (b.type === 'bank') n.bankPct = Math.min(1, n.bankPct + BANK_PCT(b.level));
         else if (b.type === 'lab') n.labRate += LAB_RATE(b.level);
@@ -1158,7 +1188,90 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         }
       }
     }
-    for (const n of Object.values(nations)) if (n.tiles > n.peak) n.peak = n.tiles;
+    for (const n of Object.values(nations)) { if (n.tiles > n.peak) n.peak = n.tiles; n.armyBonus = Math.min(ARMY_CAP, n.armyBonus + n.cmdBonus); }
+    buildGrid(plants);
+  }
+
+  /* ----- Power grid: visible power lines and factory supplies -----
+     Each powered building hangs off its nearest own power plant. Inside each plant's group the lines form a short
+     tree (every building wires to the closest one already connected), so lines run from building to building like a
+     real grid. b.parent is the next building towards the plant (null for a plant or an unwired building). */
+  function buildGrid(plants) {
+    for (const b of buildings) { b.parent = null; b.root = null; }
+    const groups = new Map(plants.map((p) => [p, []]));
+    for (const b of buildings) {
+      if (b.type === 'plant' || BUILD[b.type].free && b.type !== 'barracks' && b.type !== 'fort' || !b.on) continue;
+      let best = null, bestD = Infinity;
+      for (const p of plants) {
+        if (p.owner !== b.owner) continue;
+        const d = tileDist(p.idx, b.idx);
+        if (d <= PLANT_RANGE(p.level) && d < bestD) { bestD = d; best = p; }
+      }
+      if (best) groups.get(best).push(b);
+    }
+    for (const [p, list] of groups) {
+      p.root = p;
+      const tree = [p], left = list.slice();
+      while (left.length) {
+        let bi = 0, bp = p, bd = Infinity;
+        for (let i = 0; i < left.length; i++) for (const t of tree) {
+          const d = tileDist(left[i].idx, t.idx);
+          if (d < bd) { bd = d; bi = i; bp = t; }
+        }
+        const b = left.splice(bi, 1)[0];
+        b.parent = bp; b.root = p; tree.push(b);
+      }
+    }
+  }
+  // Where factory supplies go, and what they look like on the lines.
+  const SUPPLY = {
+    troops: { color: '#f87171', types: ['fort', 'barracks', 'base', 'command', 'bunker'] },
+    arms:   { color: '#fb923c', types: ['silo', 'airbase', 'sam', 'navalbase', 'port', 'radar'] },
+    intel:  { color: '#c4b5fd', types: ['spy', 'sradar'] },
+    money:  { color: '#e2b54b', types: ['city', 'bank', 'lab', 'hospital', 'depot'] },
+  };
+  const supplyKind = (t) => Object.keys(SUPPLY).find((k) => SUPPLY[k].types.includes(t));
+  // The chain of buildings from a up to its plant.
+  const upChain = (a) => { const out = []; for (let x = a; x; x = x.parent) out.push(x); return out; };
+  // Buildings along the power lines from a to b (both on the same plant's grid).
+  function gridPath(a, b) {
+    const up = upChain(a), down = upChain(b), meet = up.find((x) => down.includes(x));
+    return [...up.slice(0, up.indexOf(meet) + 1), ...down.slice(0, down.indexOf(meet)).reverse()];
+  }
+  let flows = [], flowTags = [];   // dots running down the lines, and "$x given" / "+$x" labels (player only)
+  // Once a month every powered factory splits its output between the buildings on its grid that use supplies.
+  // Troops become people around forts, barracks and bases; munitions add up to free missiles in silos; money is shown only
+  // (it is already part of income). Supply depots on the grid make factories ship more.
+  function shipSupplies() {
+    for (const f of buildings) {
+      if (f.type !== 'factory' || !f.on || !f.root) continue;
+      const n = nations[f.owner];
+      if (!n) continue;
+      const grid = buildings.filter((b) => b.root === f.root && b !== f && b.on && supplyKind(b.type));
+      if (!grid.length) continue;
+      const depot = grid.filter((b) => b.type === 'depot').reduce((m, b) => Math.max(m, DEPOT_BOOST(b.level)), 0);
+      const share = FACTORY_INCOME(f.level) * (1 + depot) / grid.length;
+      const mine = f.owner === PLAYER;
+      for (const r of grid) {
+        const kind = supplyKind(r.type);
+        if (kind === 'troops') {
+          const tiles = [r.idx, ...NEIGH[r.idx]].filter((j) => regions[j].owner === r.owner && !regions[j].toxic);
+          for (const j of tiles) regions[j].population = Math.min(POP_CAP * 2, regions[j].population + Math.round(share * 2 / tiles.length));
+        } else if (kind === 'arms' && r.type === 'silo') {
+          r.arms = (r.arms || 0) + share;
+          if (r.arms >= BOMBS.missile.cost && stockTotal(r) < SILO_CAP(r.level)) {
+            r.arms -= BOMBS.missile.cost; r.stock.missile++;
+            if (mine) toast('Your factories built a free missile for a silo.', 'good');
+          }
+        }
+        if (mine && flows.length < 400) {
+          const path = gridPath(f, r).map((b) => [regions[b.idx].col + 0.5, regions[b.idx].row + 0.5]);
+          flows.push({ path, color: SUPPLY[kind].color, t0: gameClock + rnd() * 300, dur: 700 + path.length * 260 });
+          flowTags.push({ x: path[path.length - 1][0], y: path[path.length - 1][1], text: '+' + money(share), color: SUPPLY[kind].color, t0: gameClock + 500 + path.length * 260 });
+        }
+      }
+      if (mine) flowTags.push({ x: regions[f.idx].col + 0.5, y: regions[f.idx].row + 0.5, text: `${money(share * grid.length)} given`, color: '#fde68a', t0: gameClock });
+    }
   }
 
   const borders = (idx, nationId) => NEIGH[idx].some((j) => regions[j].owner === nationId);
@@ -1224,7 +1337,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   // Win chance for one particular sector: forts covering it make the defender stronger.
   const winChanceAt = (att, def) => winChance(att, def);
   // Who wins is all about population.
-  const winChance = (att, def) => { const a = att.pop * (1 + spyAtk(att)), d = def.pop; return a + d ? a / (a + d) : 0.5; };
+  const winChance = (att, def) => { const a = att.pop * (1 + spyAtk(att) + (att.armyBonus || 0)), d = def.pop; return a + d ? a / (a + d) : 0.5; };
   // Escalating prices: each purchase raises the price of the next one of that kind.
   // The same rules apply to every nation, AI included.
   const price = (n, key, base, step) => Math.round(base * (1 + step * (n.buys[key] || 0)));
@@ -1261,6 +1374,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (regions[b.idx].building === b) regions[b.idx].building = null;
   }
   const portShips = (b) => ships.filter((s) => s.port === b.uid);
+  const isPort = (b) => b.type === 'port' || b.type === 'navalbase';
+  const berths = (b) => (b.type === 'navalbase' ? NAVAL_SHIPS : PORT_SHIPS)(b.level);
 
   /* ----- Wars ----- */
   const warKey = (a, b) => (a < b ? a + '|' + b : b + '|' + a);
@@ -1433,9 +1548,10 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const base = lerp(0.01, 0.04, def.aggression);
     return base * Math.pow(1 - fearOf(att, def), 2);
   }
-  // Troops needed to take a sector = the people defending it. Nothing else counts.
+  // Troops needed to take a sector = the people defending it, more inside a fort's ring, less for an army boosted by bases.
   function sectorCost(att, def, i) {
-    return Math.max(10, Math.round(regions[i].population / (1 + spyAtk(att))));
+    const fort = fortCover[i] && regions[i].owner === def.id ? 1 + FORT_BONUS(fortCover[i] - 1) * 0.5 : 1;
+    return Math.max(10, Math.round(regions[i].population * fort / (1 + spyAtk(att) + (att.armyBonus || 0))));
   }
   // Rough number of sectors an army of this size would take, judged from the enemy sectors near the target.
   function estimateSectors(att, def, idx, troops) {
@@ -1565,8 +1681,12 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
 
   /* ----- Bombs ----- */
-  const bombPhrase = (t) => (t === 'mirv' ? 'a MIRV' : t === 'spymirv' ? 'a spy warhead' : t === 'spymissile' ? 'a spy bomb' : t === 'toxic' ? 'a toxic bomb' : t === 'dirty' ? 'a dirty bomb' : t === 'firestorm' ? 'a firestorm bomb' : t === 'nuke' ? 'a nuke' : 'a missile');
-  const bigBomb = (t) => t === 'nuke' || t === 'mirv' || t === 'spymirv';
+  const bombPhrase = (t) => {
+    if (t === 'firestorm') return 'a firestorm bomb';
+    const nm = BOMBS[t].name, acr = /^[A-Z]{2,}/.test(nm);
+    return (acr ? (/^[AEIO]/.test(nm) ? 'an ' : 'a ') : /^[aeiou]/i.test(nm) ? 'an ' : 'a ') + lowName(nm);
+  };
+  const bigBomb = (t) => BOMBS[t].look === 'nuke';
   // Each bomb has its own range; every silo level adds 30% to it.
   const bombRange = (b, type) => Math.round(BOMBS[type].range * SILO_RANGE(b.level));
   const siloReach = (b, idx, type) => tileDist(b.idx, idx) <= bombRange(b, type);
@@ -1580,10 +1700,10 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const s = regions[silo.idx];
     const fx0 = s.col + 0.5, fy0 = s.row + 0.5, tx = r.col + 0.5, ty = r.row + 0.5;
     const d = Math.hypot(tx - fx0, ty - fy0);
-    const mis = { uid: nextUid++, att: att.id, def: def.id, type, fx: fx0, fy: fy0, tx, ty, d, t0: gameClock, dur: 1800 + d * 30, tried: new Set(), detected: false };
+    const mis = { uid: nextUid++, att: att.id, def: def.id, type, fx: fx0, fy: fy0, tx, ty, d, t0: gameClock, dur: (1800 + d * 30) / (BOMBS[type].fast ? 3 : 1), tried: new Set(), detected: false };
     if (BOMBS[type].mirv) mis.count = mirvCount(def);
     missiles.push(mis);
-    if (att.id === LOCAL) { medal('first_bomb'); if (type === 'nuke') chestEarn('first_nuke'); if (type === 'mirv' || type === 'spymirv') chestEarn('first_mirv'); }
+    if (att.id === LOCAL) { medal('first_bomb'); if (type === 'nuke' || type === 'icbm' || type === 'hbomb') chestEarn('first_nuke'); if (type === 'mirv' || type === 'spymirv') chestEarn('first_mirv'); }
     if (type === 'missile' && silo.golden > 0) { silo.golden--; mis.golden = true; }
     if (!BOMBS[type].stealth) news('bomb', `${tag(att)} launched ${bombPhrase(type)} at ${tag(def)}${BOMBS[type].mirv ? `: ${mis.count} warhead${mis.count > 1 ? 's' : ''}` : ''}.`, bigBomb(type) || att.isPlayer || def.isPlayer);
     return true;
@@ -1600,7 +1720,12 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       const r = regions[b.idx];
       out.push({ uid: b.uid, x: r.col + 0.5, y: r.row + 0.5, range: RADAR_RANGE(b.level), chance: RADAR_CHANCE(b.level), stealth: b.level >= STEALTH_SEE });
     }
-    for (const s of ships) if (s.owner === nid && s.kind === 'scout') out.push({ uid: s.uid, x: s.x, y: s.y, range: SHIPS.scout.range, chance: SHIPS.scout.chance });
+    for (const b of buildings) {
+      if (b.owner !== nid || b.type !== 'sam' || !b.on) continue;
+      const r = regions[b.idx];
+      out.push({ uid: b.uid, x: r.col + 0.5, y: r.row + 0.5, range: SAM_R(b.level), chance: SAM_CHANCE(b.level), stealth: false });
+    }
+    for (const s of ships) if (s.owner === nid && SHIPS[s.kind].chance) out.push({ uid: s.uid, x: s.x, y: s.y, range: SHIPS[s.kind].range, chance: SHIPS[s.kind].chance });
     return out;
   }
   function updateMissiles() {
@@ -1614,11 +1739,11 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         const dist = Math.hypot(x - d.x, y - d.y);
         if (nations[m.def] && nations[m.def].isPlayer && !m.detected && dist <= d.range * 1.6 && (!BOMBS[m.type].stealth || d.stealth)) {
           m.detected = true;
-          toastTo(m.def, `Incoming ${BOMBS[m.type].name.toLowerCase()} from ${nations[m.att].name}!`, 'bad');
+          toastTo(m.def, `Incoming ${lowName(BOMBS[m.type].name)} from ${nations[m.att].name}!`, 'bad');
         }
         if (dist <= d.range && !m.tried.has(d.uid)) {
           m.tried.add(d.uid);
-          if (rnd() < d.chance) { missiles = missiles.filter((x2) => x2 !== m); intercept(m, x, y); break; }
+          if (rnd() < d.chance * (BOMBS[m.type].fast ? 0.5 : 1)) { missiles = missiles.filter((x2) => x2 !== m); intercept(m, x, y); break; }
         }
       }
       if (BOMBS[m.type].mirv && missiles.includes(m) && t >= 0.86) { missiles = missiles.filter((x) => x !== m); splitMirv(m, x, y); }
@@ -1687,7 +1812,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     spawnBoom('intercept', x, y, 0.7);
     const what = bombPhrase(m.type);
     if (def.isPlayer) { toastTo(def.id, `Your defenses shot down ${what} from ${att.name}.`, 'good'); if (def.id === LOCAL) { state.shotDown++; bumpStat('shotDown'); trigger('intercept'); chestEarn('first_intercept'); } }
-    if (att.isPlayer) toastTo(att.id, `${def.name} shot down your ${BOMBS[m.type].name.toLowerCase()}.`, 'bad');
+    if (att.isPlayer) toastTo(att.id, `${def.name} shot down your ${lowName(BOMBS[m.type].name)}.`, 'bad');
   }
   // A bomb that reaches its target explodes there.
   function detonate(m, x, y, intercepted, group) {
@@ -1708,17 +1833,17 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         if (months > r.toxic) { r.toxic = Math.min(255, months); toxicDirty = true; }
       }
       if (d > B.blast) continue;
-      if (r.building && d <= B.blast * 0.7) {
+      if (r.building && d <= B.blast * (B.emp ? 1 : 0.7)) {
         const lost = r.building;
         destroyBuilding(lost);
         if (lost.type === 'silo' || lost.type === 'factory') lostList.push(lost);
       }
       if (!r.owner) continue;
       const before = r.population;
-      const hp = nations[r.owner].health || 1, shield = bunkerCover[r.id] ? BUNKER_SHIELD(bunkerCover[r.id] - 1) : 0;
+      const hp = nations[r.owner].health || 1, shield = bunkerCover[r.id] && !B.pierce ? BUNKER_SHIELD(bunkerCover[r.id] - 1) : 0;
       r.population = Math.round(r.population * (1 - ((d < B.blast * 0.6 ? B.kill : B.kill * 0.5) / hp) * (1 - shield)));
       killed += before - r.population;
-      if (d <= B.flatten && r.owner !== m.att && !bunkerCover[r.id]) {
+      if (d <= B.flatten && r.owner !== m.att && (!bunkerCover[r.id] || B.pierce)) {
         nations[r.owner].lastHitBy = m.att;
         r.owner = null; r.population = 0; flattened++;
         territoryDirty = true;
@@ -1745,7 +1870,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (def.id === LOCAL) { trigger('bombed'); if (bigBomb(m.type)) state.nukedAt = monthIndex(); }
     if (att.id === LOCAL) state.firedBomb = true;
     reportLost(lostList, att);
-    const name = B.name.toLowerCase();
+    const name = lowName(B0.name);
     if (intercepted) {
       if (def.isPlayer) toastTo(def.id, `Your defenses shot down ${bombPhrase(m.type)} from ${att.name}.`, 'good');
       if (att.isPlayer) toastTo(att.id, `${def.name} shot down your ${name}.`, 'bad');
@@ -1761,7 +1886,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
      Toxic bomb: no fire at all, a slow green gas cloud that rolls outward and wobbles, a spinning hazard ring and bubbles.
      Nuke: a blinding white flash, a screen shake, three shockwaves, a huge fireball, a rising mushroom cloud and falling embers.
      Each blast stores its own random particles when it goes off, so it looks the same every frame it's drawn. */
-  const BOOM_MS = { missile: 1500, toxic: 3400, nuke: 5600, intercept: 700, quake: 1400 };
+  const BOOM_MS = { missile: 1500, toxic: 3400, nuke: 5600, intercept: 700, quake: 1400, emp: 1800 };
   const REDUCED_MOTION = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   let shake = { until: 0, dur: 1, power: 0 }, flash = { t0: -1e9, dur: 1, power: 0 }, slowmo = { until: 0, dur: 1 };
   const pulses = [];   // short rings where you just built or upgraded
@@ -1782,7 +1907,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     // Only shake and flash the screen for blasts you can actually see.
     const px = camera.x + x * camera.s, py = camera.y + y * camera.s;
     const seen = state.screen === 'game' && px > -80 && px < W + 80 && py > -80 && py < H + 80;
-    if (state.screen !== 'title' && SFX[type] && (!quiet || rnd() < 0.15)) sfxPlay(type, seen ? 1 : 0.35);
+    const snd = type === 'emp' ? 'missile' : type;
+    if (state.screen !== 'title' && SFX[snd] && (!quiet || rnd() < 0.15)) sfxPlay(snd, seen ? 1 : 0.35);
     if (!seen || REDUCED_MOTION || quiet) return;
     const now = performance.now();
     if (type === 'nuke') { shake = { until: now + 1400, dur: 1400, power: 14 }; flash = { t0: now, dur: 1100, power: 0.85 }; slowmo = { until: now + 900, dur: 900 }; }
@@ -1812,13 +1938,39 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       ctx.beginPath(); ctx.arc(r.col + 0.5, r.row + 0.5, 0.4 + easeOut(t) * 1.8, 0, 7); ctx.stroke();
     }
   }
-  // Drawn in map space (1 unit = 1 sector), so blasts grow and shrink with the zoom.
+  // Drawn in map space (1 unit = 1 sector), so blasts grow and shrink with the zoom, but never get smaller than
+  // BOOM_MIN_PX on screen: zoomed all the way out every blast is still easy to spot.
+  const BOOM_MIN_PX = 18;
   function drawBooms(now, s) {
     for (const b of booms) {
       const age = gameClock - b.t0, dur = BOOM_MS[b.type] || 1400;
       if (age < 0 || age >= dur) continue;
       const t = age / dur;
-      if (b.type === 'missile') drawMissileBoom(b, t, s);
+      const k = Math.max(1, BOOM_MIN_PX / (Math.max(0.6, b.r) * s));
+      ctx.save();
+      if (k > 1) { ctx.translate(b.x, b.y); ctx.scale(k, k); ctx.translate(-b.x, -b.y); s *= k; }
+      drawBoom(b, t, s, now, age);
+      if (k > 1) s /= k;
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1; ctx.setLineDash([]); ctx.lineDashOffset = 0; ctx.lineCap = 'butt';
+    booms = booms.filter((b) => gameClock - b.t0 < (BOOM_MS[b.type] || 1400));
+  }
+  function drawBoom(b, t, s, now, age) {
+    {
+      if (b.type === 'emp') {   // EMP: no fire, just crackling blue rings
+        const e = easeOut(t);
+        glow(b.x, b.y, b.r * (0.5 + e * 0.7), [[0, `rgba(190,230,255,${0.6 * (1 - t)})`], [1, 'rgba(60,140,255,0)']]);
+        for (const off of [0, 0.15, 0.3]) {
+          const q = clamp((t - off) / 0.7, 0, 1);
+          if (!q || q >= 1) continue;
+          ctx.strokeStyle = `rgba(125,211,252,${1 - q})`; ctx.lineWidth = 2.2 / s;
+          ctx.beginPath(); ctx.arc(b.x, b.y, b.r * easeOut(q), 0, 7); ctx.stroke();
+        }
+        ctx.strokeStyle = `rgba(224,242,254,${1 - t})`; ctx.lineWidth = 1.4 / s; ctx.beginPath();
+        for (let i = 0; i < 8; i++) { const a = i * 0.785 + now / 400, d = b.r * (0.3 + e * 0.6); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + Math.cos(a) * d * 0.5 + Math.sin(i * 7 + now / 60) * 0.15, b.y + Math.sin(a) * d * 0.5); ctx.lineTo(b.x + Math.cos(a) * d, b.y + Math.sin(a) * d); }
+        ctx.stroke();
+      } else if (b.type === 'missile') drawMissileBoom(b, t, s);
       else if (b.type === 'toxic') drawToxicBoom(b, t, s, now, age);
       else if (b.type === 'nuke') drawNukeBoom(b, t, s, now);
       else if (b.type === 'intercept') {
@@ -1833,8 +1985,6 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (0.6 + t * 1.6), 0, 7); ctx.stroke();
       }
     }
-    ctx.globalAlpha = 1; ctx.setLineDash([]); ctx.lineDashOffset = 0; ctx.lineCap = 'butt';
-    booms = booms.filter((b) => gameClock - b.t0 < (BOOM_MS[b.type] || 1400));
   }
   function drawMissileBoom(b, t, s) {
     const { x, y, r } = b, e = easeOut(t);
@@ -1955,6 +2105,11 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   function foundNation(n, idx) {
     take(n, idx, 3000);
     for (const j of NEIGH[idx]) if (regions[j].isLand && !regions[j].owner) take(n, j, 800);
+    if (state.cfg.tutorial) return;   // the tutorial teaches building these yourself
+    // Starter kit: a power plant on the capital and a factory wired up next to it.
+    placeBuilding(n, 'plant', idx);
+    const next = NEIGH[idx].find((j) => regions[j].owner === n.id && !regions[j].building);
+    if (next !== undefined) placeBuilding(n, 'factory', next);
   }
   function spawnAIs() {
     const placed = Object.values(nations).filter((n) => n.isPlayer && n.tileList.length).map((n) => n.tileList[0]);
@@ -2015,7 +2170,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         if (r.toxic === 0) toxicDirty = true;
       } else if (r.owner) {
         const cap = POP_CAP * (cityBoost[r.id] ? 2 * (1 + (r.owner ? spyCity(nations[r.owner]) : 0)) : 1) * (farmCover[r.id] ? 1.3 : 1);
-        const rate = (cityBoost[r.id] ? 1.06 : 1.02) + (healCover[r.id] ? 0.01 : 0);
+        const rate = (cityBoost[r.id] ? 1.06 : 1.02) + (healCover[r.id] ? 0.01 : 0) + (baseCover[r.id] ? 0.01 : 0);
         r.population = Math.min(cap, Math.round(r.population * rate + (cityBoost[r.id] ? 40 : 15)));
       }
     }
@@ -2027,6 +2182,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       n.gold += n.income;
       if (n.isPlayer && n.income > 0) sfxPlay('coin');
     }
+    shipSupplies();
     checkCeasefires();
     if (!state.cfg.tutorial) {   // tutorial rivals follow the script instead
       if (rnd() < 0.08) worldEvent();
@@ -2100,7 +2256,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
   // Nations with a port can land on free coast across the water, like the player's transports.
   function aiOverseas(n) {
-    const ports = n.blds.filter((b) => b.type === 'port');
+    const ports = n.blds.filter(isPort);
     if (!ports.length || n.gold < claimCost(n)) return false;
     const reach = 16 + 3 * Math.max(...ports.map((b) => b.level));
     for (let t = 0; t < 30; t++) {
@@ -2193,7 +2349,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const atWar = enemiesOf(n).length > 0;
     const cnt = (t) => n.blds.filter((b) => b.type === t).length;
     let want = null;
-    if (cnt('factory') < 1 + Math.floor(n.tiles / 70)) want = 'factory';
+    if (cnt('plant') < 1 + Math.floor(n.tiles / 90)) want = 'plant';
+    else if (cnt('factory') < 1 + Math.floor(n.tiles / 70)) want = 'factory';
     else if (n.gold > buildCost(n, 'city') * (1.6 - n.skill * 0.4) && cnt('city') < 1 + Math.floor(n.tiles / 160)) want = 'city';
     else if (cnt('farm') < Math.floor(n.tiles / 90) && rnd() < 0.5) want = 'farm';
     else if (n.tech >= 105 && cnt('bank') < Math.floor(n.tiles / 120) && rnd() < 0.4 + n.skill * 0.3) want = 'bank';
@@ -2202,14 +2359,20 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     else if (!n.frontier.length && !cnt('port') && n.tiles > 30) want = 'port';
     else if (atWar && cnt('barracks') < 1 + Math.floor(n.tiles / 150)) want = 'barracks';
     else if (atWar && cnt('fort') < 1 + Math.floor(n.tiles / 120) && rnd() < 0.3 + n.skill * 0.4) want = 'fort';
+    else if (atWar && n.tech >= BUILD.base.tech && cnt('base') < Math.floor(n.tiles / 140) && rnd() < 0.2 + n.skill * 0.3) want = 'base';
+    else if (atWar && n.tech >= BUILD.command.tech && !cnt('command') && n.tiles > 80 && rnd() < 0.15) want = 'command';
+    else if (cnt('factory') > 1 && !cnt('depot') && rnd() < 0.15) want = 'depot';
     if (atWar && !cnt('spy') && n.tech >= BUILD.spy.tech && n.tiles > 50 && n.skill > 0.4 && rnd() < 0.15) want = 'spy';
     else if (atWar && cnt('spy') && !cnt('airbase') && n.tech >= BUILD.airbase.tech && rnd() < 0.2) want = 'airbase';
     if (atWar && bombsAllowed() && n.tech >= BUILD.silo.tech && cnt('silo') < 1 + Math.floor(n.tiles / 200) && rnd() < 0.25 + n.aggression * 0.6) want = 'silo';
     const threatened = enemiesOf(n).some((e) => e.blds.some((b) => b.type === 'silo'));
     if (threatened && n.tech >= BUILD.radar.tech && cnt('radar') < 1 + Math.floor(n.tiles / 160) && rnd() < 0.3 + n.skill * 0.5) want = 'radar';
+    else if (threatened && n.tech >= BUILD.sam.tech && cnt('sam') < Math.floor(n.tiles / 120) && rnd() < 0.2 + n.skill * 0.3) want = 'sam';
+    // Anything that needs power but has nowhere powered to go gets a power plant first.
+    if (want && !BUILD[want].free && aiBuildSpot(n, !!BUILD[want].coastal, want) === null) want = 'plant';
     const reserve = 1.6 - n.skill * 0.5;
     if (want && n.gold >= buildCost(n, want) * reserve) {
-      const idx = want === 'fort' ? aiFrontSpot(n) : aiBuildSpot(n, want === 'port', want);
+      const idx = want === 'fort' ? aiFrontSpot(n) : want === 'plant' ? aiPlantSpot(n) : aiBuildSpot(n, !!BUILD[want].coastal, want);
       if (idx !== null) { n.gold -= buildCost(n, want); bump(n, 'b:' + want); placeBuilding(n, want, idx); return; }
     }
     if (n.blds.length && rnd() < n.skill * 0.35) {
@@ -2223,10 +2386,17 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       if (nukesAllowed() && s.level >= BOMBS.spymirv.siloLevel && rnd() < 0.02 + n.skill * 0.04) t = 'spymirv';
       else if (nukesAllowed() && s.level >= BOMBS.spymissile.siloLevel && rnd() < 0.04 + n.skill * 0.06) t = 'spymissile';
       else if (nukesAllowed() && s.level >= BOMBS.mirv.siloLevel && rnd() < 0.05 + n.skill * 0.1) t = 'mirv';
+      else if (s.level >= BOMBS.hyper.siloLevel && rnd() < 0.06 + n.skill * 0.06) t = 'hyper';
+      else if (nukesAllowed() && s.level >= BOMBS.hbomb.siloLevel && rnd() < 0.05 + n.skill * 0.08) t = 'hbomb';
+      else if (nukesAllowed() && s.level >= BOMBS.icbm.siloLevel && rnd() < 0.06 + n.skill * 0.1) t = 'icbm';
       else if (nukesAllowed() && s.level >= BOMBS.nuke.siloLevel && rnd() < 0.12 + n.skill * 0.2) t = 'nuke';
+      else if (toxicAllowed() && s.level >= BOMBS.thermo.siloLevel && rnd() < 0.1) t = 'thermo';
       else if (toxicAllowed() && s.level >= BOMBS.dirty.siloLevel && rnd() < 0.12) t = 'dirty';
+      else if (s.level >= BOMBS.emp.siloLevel && rnd() < 0.08) t = 'emp';
       else if (toxicAllowed() && s.level >= BOMBS.firestorm.siloLevel && rnd() < 0.2) t = 'firestorm';
+      else if (s.level >= BOMBS.buster.siloLevel && rnd() < 0.12) t = 'buster';
       else if (toxicAllowed() && s.level >= BOMBS.toxic.siloLevel && rnd() < 0.3) t = 'toxic';
+      else if (s.level >= BOMBS.cruise.siloLevel && rnd() < 0.3) t = 'cruise';
       if (n.gold >= bombCost(n, t) * 1.3) { n.gold -= bombCost(n, t); bump(n, 'bomb:' + t); s.stock[t]++; }
       break;
     }
@@ -2239,9 +2409,24 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     }
     return aiBuildSpot(n, false, 'fort');
   }
+  // A new power plant goes next to buildings that have no power yet, or anywhere safe when everything is powered.
+  function aiPlantSpot(n) {
+    const dark = n.blds.find((b) => !b.on);
+    if (!dark) return aiBuildSpot(n, false, 'plant');
+    let best = null, bestD = Infinity;
+    for (let t = 0; t < 30; t++) {
+      const i = pick(n.tileList);
+      if (i === undefined) break;
+      const r = regions[i];
+      if (r.building || r.toxic) continue;
+      const d = tileDist(i, dark.idx);
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    return best;
+  }
   function aiBuildSpot(n, coast, type) {
-    const needPower = type && type !== 'factory' && !BUILD[type].free;
-    const facs = buildings.filter((b) => (b.type === 'factory' || b.type === 'plant') && onSide(b.owner, n.id));   // allies share power
+    const needPower = type && !BUILD[type].free;
+    const facs = buildings.filter((b) => b.type === 'plant' && onSide(b.owner, n.id));   // allies share power
     const allies = alliesOf(n).filter((a) => a.tileList.length);
     let best = null, bestS = -1;
     for (let t = 0; t < 25; t++) {
@@ -2250,7 +2435,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       if (i === undefined) break;
       const r = regions[i];
       if (r.building || r.toxic || (coast && !r.coastal)) continue;
-      if (needPower && !facs.some((f) => tileDist(f.idx, i) <= (f.type === 'plant' ? PLANT_RANGE : FACTORY_RANGE)(f.level))) continue;
+      if (needPower && !facs.some((f) => tileDist(f.idx, i) <= PLANT_RANGE(f.level))) continue;
       const s = rnd() < n.skill ? ownNeighbours(i, n.id) : rnd() * 4;   // smart nations build away from the front
       if (s > bestS) { bestS = s; best = i; }
     }
@@ -2266,7 +2451,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const enemies = enemiesOf(n).filter((e) => e.blds.some((b) => HIDDEN_ORDER.includes(b.type)));
     if (!enemies.length) return;
     const target = pick(enemies);
-    const base = n.blds.find((b) => b.type === 'airbase' && b.on), port = n.blds.find((b) => b.type === 'port' && b.on);
+    const base = n.blds.find((b) => b.type === 'airbase' && b.on), port = n.blds.find((b) => isPort(b) && b.on);
     const hidden = target.blds.filter((b) => HIDDEN_ORDER.includes(b.type));
     const aim = pick(hidden);
     let cost = 0, R = 0, how = '';
@@ -2689,7 +2874,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
   function buyBomb(silo, type) {
     const p = nations[PLAYER], B = BOMBS[type];
-    if (!silo.on) return fail('This silo has no power. Build a factory nearby.');
+    if (!silo.on) return fail('This silo has no power. Build a power plant nearby.');
     if (BOMB_TIER[type] >= 1 && !toxicAllowed()) return fail('Toxic bombs are off on Easy.');
     if (BOMB_TIER[type] >= 2 && !nukesAllowed()) return fail(D().nukeYears === null ? 'Nukes are off on Easy.' : 'Nukes are not available yet.');
     if (silo.level < B.siloLevel) return fail(`${B.name}s need a level ${B.siloLevel} silo.`);
@@ -2716,8 +2901,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }
   function buildShip(port, kind) {
     const p = nations[PLAYER], S = SHIPS[kind];
-    if (!port.on) return fail('This port has no power. Build a factory nearby.');
-    if (portShips(port).length >= PORT_SHIPS(port.level)) return fail('This port is full. Upgrade it to dock more ships.');
+    if (!port.on) return fail('This port has no power. Build a power plant nearby.');
+    if (portShips(port).length >= berths(port)) return fail('This port is full. Upgrade it to dock more ships.');
     if (p.gold < shipCost(p, kind)) return fail('Not enough money.');
     const water = NEIGH[port.idx].find((j) => !regions[j].isLand && !regions[j].toxic);
     if (water === undefined) return fail('No clean water next to this port.');
@@ -2798,7 +2983,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     if (state.placing === type) return cancelMode();
     cancelMode(); hideContext(); closeSheet();
     state.placing = type;
-    showModebar(`Tap your or an ally's ${B.coastal ? 'coast' : 'land'} to build a ${B.name} · ${money(buildCost(p, type))}${type !== 'factory' && !B.free ? ' (inside a factory ring)' : ''}`);
+    showModebar(`Tap your or an ally's ${B.coastal ? 'coast' : 'land'} to build a ${B.name} · ${money(buildCost(p, type))}${!B.free ? ' (inside a power plant circle)' : ''}`);
   }
   function tryPlace(idx) {
     if (placeAt(state.placing, idx)) { cancelMode(); selectSector(idx); }
@@ -2816,7 +3001,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     tally();
     medal('first_build'); if (type === 'sradar') chestEarn('sradar_built');
     sfxPlay('build'); pulses.push({ idx, t0: gameClock });
-    toast(b.on ? `${B.name} built.` : `${B.name} built, but it has no power. Build a factory within range.`, b.on ? 'good' : 'bad');
+    toast(b.on ? `${B.name} built.` : `${B.name} built, but it has no power. Build a power plant within range.`, b.on ? 'good' : 'bad');
     if (type === 'city') { for (const i of p.tileList) if (cityBoost[i]) regions[i].population = Math.min(POP_CAP * 2, Math.round(regions[i].population * 2)); medal('city1'); trigger('city'); }
     afterChange();
     return true;
@@ -3025,7 +3210,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
             const stocked = () => mine().reduce((s, x) => s + x.stock[t], 0);
             const ready = () => mine().filter((x) => siloReach(x, r.id, t)).reduce((s, x) => s + x.stock[t], 0);
             if (!stocked()) continue;
-            mk(strikes, t === 'toxic' ? 'toxic' : 'missile', () => ready() ? `Fire ${BOMBS[t].name.toLowerCase()} · ${ready()} in range` : `${BOMBS[t].name} · out of range`, () => playerStrike(t, r.id), { disabled: () => !ready() });
+            mk(strikes, t === 'toxic' ? 'toxic' : 'missile', () => ready() ? `Fire ${lowName(BOMBS[t].name)} · ${ready()} in range` : `${BOMBS[t].name} · out of range`, () => playerStrike(t, r.id), { disabled: () => !ready() });
           }
           if (p.blds.some((x) => x.type === 'airbase')) mk(strikes, 'ghost', () => planeBase(r.id).length ? `Spy plane · ${money(planeCost(p))}` : 'Spy plane · out of range', () => sendSpyPlane(r.id), { disabled: () => !planeBase(r.id).length || p.gold < planeCost(p) });
           if (strikes.children.length) box.appendChild(strikes);
@@ -3092,7 +3277,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       const silos = owner.blds.filter((b) => b.type === 'silo');
       const stock = {};
       for (const b of silos) for (const t of BOMB_TYPES) if (b.stock[t]) stock[t] = (stock[t] || 0) + b.stock[t];
-      const armed = Object.entries(stock).map(([t, c]) => `${c} ${BOMBS[t].name.toLowerCase()}`).join(', ');
+      const armed = Object.entries(stock).map(([t, c]) => `${c} ${lowName(BOMBS[t].name)}`).join(', ');
       const wait = Math.max(0, (owner.strikeAt || 0) - monthIndex());
       out += `<br><b>Plans:</b> ${armed ? `armed with ${armed}` : 'no bombs ready'}${armed ? `, next strike in about ${wait} month${wait === 1 ? '' : 's'} at the earliest` : ''}.`;
     }
@@ -3115,7 +3300,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     sect.appendChild(head);
     const info = document.createElement('div');
     info.className = 'note'; info.style.margin = '0';
-    if (!b.on) { const warn = document.createElement('div'); warn.className = 'note warn'; warn.style.margin = '0'; warn.textContent = 'No power: this building does nothing until a factory covers it. Build or upgrade a factory nearby.'; sect.appendChild(warn); }
+    if (!b.on) { const warn = document.createElement('div'); warn.className = 'note warn'; warn.style.margin = '0'; warn.textContent = 'No power: this building does nothing until a power plant reaches it. Build or upgrade a power plant nearby.'; sect.appendChild(warn); }
     const ms = nextMilestone(b.type, b.level);
     info.textContent = B.info(b.level) + (b.level < maxLevel(b.type) ? `. Next level: ${B.info(b.level + 1)}.` : '.') + (ms ? ` Level ${ms[0]}: ${ms[1]}.` : '') + (b.type === 'silo' ? ' To fire, tap enemy land on the map.' : '');
     sect.appendChild(info);
@@ -3135,16 +3320,16 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         sect.appendChild(row);
       }
     }
-    if (b.type === 'port') {
+    if (isPort(b)) {
       const docked = document.createElement('div');
       docked.className = 'note'; docked.style.margin = '0';
-      live(docked, () => `Ships from this port: ${portShips(b).length} of ${PORT_SHIPS(b.level)}`);
+      live(docked, () => `Ships from here: ${portShips(b).length} of ${berths(b)}`);
       sect.appendChild(docked);
       const pair = document.createElement('div');
       pair.className = 'two';
-      for (const kind of ['scout', 'transport', ...(p.blds.some((x) => x.type === 'spy') ? ['spy'] : [])]) {
+      for (const kind of ['scout', 'transport', ...(b.type === 'navalbase' ? ['destroyer'] : []), ...(p.blds.some((x) => x.type === 'spy') ? ['spy'] : [])]) {
         mk(pair, 'gold', () => `${SHIPS[kind].name} · ${money(shipCost(p, kind))}`, () => buildShip(b, kind),
-          { disabled: () => p.gold < shipCost(p, kind) || portShips(b).length >= PORT_SHIPS(b.level) });
+          { disabled: () => p.gold < shipCost(p, kind) || portShips(b).length >= berths(b) });
       }
       sect.appendChild(pair);
     }
@@ -3286,7 +3471,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
         btn.className = 'bitem' + (state.placing === t ? ' active' : '');
         btn.disabled = locked;
         btn.title = B.info(0);
-        btn.innerHTML = `<svg class="i" viewBox="0 0 24 24"><path d="${ICONS[t]}"/></svg><b>${B.name}</b><span>${money(cost)}</span><small>${locked ? (p.tech >= B.tech ? 'Needs a max-level Spy HQ' : `Unlocks at ${B.tech}% tech`) : B.coastal ? 'Coast only' : t !== 'factory' && !B.free ? 'Needs power' : 'Works anywhere'}</small>`;
+        btn.innerHTML = `<svg class="i" viewBox="0 0 24 24"><path d="${ICONS[t]}"/></svg><b>${B.name}</b><span>${money(cost)}</span><small>${locked ? (p.tech >= B.tech ? 'Needs a max-level Spy HQ' : `Unlocks at ${B.tech}% tech`) : B.coastal ? (B.free ? 'Coast only' : 'Coast · needs power') : !B.free ? 'Needs power' : 'Works anywhere'}</small>`;
         btn.addEventListener('click', () => { closeBuildMenu(); startPlacing(t); });
         grid.appendChild(btn);
       }
@@ -3316,10 +3501,10 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const own = new Uint8Array(N), pop = new Uint16Array(N), tox = new Uint8Array(N);
     for (let i = 0; i < N; i++) { const r = regions[i]; own[i] = r.owner ? index.get(r.owner) : 0; pop[i] = r.population; tox[i] = r.toxic; }
     return {
-      v: 4, cfg: state.cfg, history, shotDown: state.shotDown, firedBomb: state.firedBomb, questDone: state.questDone, diff: state.diff, startMonth: state.startMonth, alliances: [...alliances], runNo: state.runNo, month: state.month, year: state.year, gameClock, nextUid, wonShown: state.wonShown, won90: state.won90, tuneK: state.tuneK, tuneLogged: state.tuneLogged, playerCalm: state.playerCalm || 0,
+      v: 5, cfg: state.cfg, history, shotDown: state.shotDown, firedBomb: state.firedBomb, questDone: state.questDone, diff: state.diff, startMonth: state.startMonth, alliances: [...alliances], runNo: state.runNo, month: state.month, year: state.year, gameClock, nextUid, wonShown: state.wonShown, won90: state.won90, tuneK: state.tuneK, tuneLogged: state.tuneLogged, playerCalm: state.playerCalm || 0,
       nations: ids.map((id) => { const n = nations[id]; return { id, name: n.name, color: n.color, isPlayer: n.isPlayer, style: n.style, skill: n.skill, aggression: n.aggression, alive: n.alive, buys: n.buys, gold: n.gold, tech: n.tech, peak: n.peak, lastHitBy: n.lastHitBy, milestone: n.milestone, offerCd: n.offerCd, allyCd: n.allyCd, giftCd: n.giftCd, health: n.health, team: n.team, coupons: n.coupons, intel: n.intel ? [...n.intel] : undefined, spyAt: n.spyAt }; }),
       own: u8ToB64(own), pop: u8ToB64(new Uint8Array(pop.buffer)), tox: u8ToB64(tox),
-      buildings: buildings.map((b) => ({ uid: b.uid, type: b.type, level: b.level, owner: b.owner, idx: b.idx, stock: b.stock, golden: b.golden || 0 })),
+      buildings: buildings.map((b) => ({ uid: b.uid, type: b.type, level: b.level, owner: b.owner, idx: b.idx, stock: b.stock, golden: b.golden || 0, arms: b.arms || 0 })),
       found: [...found], spyScans, spyFound,
       ships: ships.map((s) => ({ uid: s.uid, owner: s.owner, kind: s.kind, port: s.port, x: s.x, y: s.y })),
       wars: [...wars.values()], truces: [...truces.entries()],
@@ -3367,6 +3552,16 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     gameClock = d.gameClock; nextUid = d.nextUid;
     enterGame();
     tally();
+    // Saves before v5 had factories that powered themselves: give every nation that has buildings but no power plant one.
+    if ((d.v || 0) < 5) {
+      for (const n of Object.values(nations)) {
+        if (!n.alive || !n.blds.length || n.blds.some((b) => b.type === 'plant')) continue;
+        const near = n.blds.find((b) => b.type === 'factory') || n.blds[0];
+        const spot = n.tileList.filter((i) => !regions[i].building && !regions[i].toxic).sort((a, b) => tileDist(a, near.idx) - tileDist(b, near.idx))[0];
+        if (spot !== undefined) placeBuilding(n, 'plant', spot);
+      }
+      tally();
+    }
     focusOnPlayer();
     afterChange();
     toast(`Run ${d.runNo} resumed.`, 'gold');
@@ -4384,6 +4579,72 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     }
   }
 
+  // Power lines, the power running down them, your plants' circles, and factory supplies on their way.
+  function drawGrid(now, s, sx, sy, onScreen) {
+    const ends = (b) => { const a = regions[b.idx], c = regions[b.parent.idx]; return [sx(c.col + 0.5), sy(c.row + 0.5), sx(a.col + 0.5), sy(a.row + 0.5)]; };
+    const wired = buildings.filter((b) => b.parent && (b.owner === PLAYER || (s >= 9 && !hiddenFrom(b) && !hiddenFrom(b.parent))));
+    // Your plants' circles, faint, so you can see where power reaches (it grows as you upgrade the plant).
+    ctx.setLineDash([4, 5]); ctx.lineWidth = 1;
+    for (const b of buildings) {
+      if (b.type !== 'plant' || b.owner !== PLAYER) continue;
+      const r = regions[b.idx];
+      ctx.strokeStyle = 'rgba(250,204,21,0.28)';
+      ctx.beginPath(); ctx.arc(sx(r.col + 0.5), sy(r.row + 0.5), PLANT_RANGE(b.level) * s, 0, 7); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.lineCap = 'round';
+    for (const pass of [0, 1]) {
+      for (const b of wired) {
+        const [x0, y0, x1, y1] = ends(b);
+        if (!onScreen(x0, y0, 400) && !onScreen(x1, y1, 400)) continue;
+        const mine = b.owner === PLAYER;
+        ctx.strokeStyle = pass ? (mine ? 'rgba(250,204,21,0.85)' : 'rgba(250,204,21,0.4)') : 'rgba(4,7,11,0.7)';
+        ctx.lineWidth = pass ? (mine ? 1.8 : 1.2) : (mine ? 4 : 3);
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+      }
+    }
+    // Power: small bright dots running from the plant outward along every one of your lines.
+    ctx.fillStyle = '#fef9c3';
+    for (const b of wired) {
+      if (b.owner !== PLAYER) continue;
+      const [x0, y0, x1, y1] = ends(b), len = Math.hypot(x1 - x0, y1 - y0);
+      if (len < 6) continue;
+      const gapPx = 26, k = (now / 30 + hash01(b.uid) * gapPx) % gapPx;
+      for (let d = k; d < len; d += gapPx) { const t = d / len; ctx.beginPath(); ctx.arc(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 1.4, 0, 7); ctx.fill(); }
+    }
+    // Supplies: a coloured dot with a short tail travelling from the factory to the building it feeds.
+    for (const f of flows) {
+      const t = (gameClock - f.t0) / f.dur;
+      if (t < 0 || t >= 1 || f.path.length < 2) continue;
+      const segs = f.path.length - 1, pos = (u) => { const q = clamp(u, 0, 1) * segs, i = Math.min(segs - 1, Math.floor(q)), a = f.path[i], c = f.path[i + 1], w = q - i; return [sx(a[0] + (c[0] - a[0]) * w), sy(a[1] + (c[1] - a[1]) * w)]; };
+      const [hx, hy] = pos(t), [tx, ty] = pos(t - 0.06);
+      ctx.strokeStyle = f.color; ctx.globalAlpha = 0.55; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(hx, hy); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.fillStyle = f.color;
+      ctx.beginPath(); ctx.arc(hx, hy, 3.2, 0, 7); ctx.fill();
+      ctx.strokeStyle = 'rgba(4,7,11,0.8)'; ctx.lineWidth = 1; ctx.stroke();
+    }
+    flows = flows.filter((f) => gameClock - f.t0 < f.dur);
+    ctx.lineCap = 'butt';
+  }
+  // "$x given" over factories and "+$x" over the buildings they feed: only once you're zoomed in enough to read them.
+  function drawFlowTags(s, sx, sy, onScreen) {
+    if (s >= 7) {
+      ctx.font = '700 11px "Chakra Petch", ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      for (const g of flowTags) {
+        const age = (gameClock - g.t0) / 950;
+        if (age < 0 || age >= 1) continue;
+        const x = sx(g.x), y = sy(g.y) - 18 - age * 16;
+        if (!onScreen(x, y)) continue;
+        ctx.globalAlpha = age < 0.75 ? 1 : (1 - age) / 0.25;
+        ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(4,7,11,0.9)'; ctx.strokeText(g.text, x, y);
+        ctx.fillStyle = g.color; ctx.fillText(g.text, x, y);
+      }
+      ctx.globalAlpha = 1;
+    }
+    flowTags = flowTags.filter((g) => gameClock - g.t0 < 950);
+  }
+
   function draw(now) {
     if (territoryDirty && now - lastTerritoryBuild > 120) { tally(); rebuildTerritory(); lastTerritoryBuild = now; }
     if (toxicDirty) rebuildToxic();
@@ -4457,7 +4718,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const ringTypes = new Set();
     if (state.placing) {
       if (BUILD[state.placing].radius) ringTypes.add(state.placing);
-      if (state.placing !== 'factory' && !BUILD[state.placing].free) { ringTypes.add('factory'); ringTypes.add('plant'); }
+      if (!BUILD[state.placing].free) ringTypes.add('plant');
     }
     if (selArea || ringTypes.size) {
       ctx.lineWidth = 1.6 / s; ctx.setLineDash([0.8, 0.6]);
@@ -4470,7 +4731,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       ctx.setLineDash([]);
     }
     // Bomb ranges: around a selected silo, or from every silo that can hit a selected enemy sector.
-    const RANGE_COL = { missile: 'rgba(255,255,255,0.75)', toxic: 'rgba(124,255,46,0.85)', firestorm: 'rgba(255,150,60,0.85)', dirty: 'rgba(190,255,120,0.85)', nuke: 'rgba(255,224,102,0.9)', mirv: 'rgba(255,120,200,0.95)', spymissile: 'rgba(196,181,253,0.8)', spymirv: 'rgba(196,181,253,0.95)' };
+    const RANGE_COL = { missile: 'rgba(255,255,255,0.75)', toxic: 'rgba(124,255,46,0.85)', firestorm: 'rgba(255,150,60,0.85)', dirty: 'rgba(190,255,120,0.85)', nuke: 'rgba(255,224,102,0.9)', cruise: 'rgba(226,232,240,0.85)', buster: 'rgba(203,213,225,0.85)', emp: 'rgba(125,211,252,0.9)', thermo: 'rgba(251,146,60,0.9)', icbm: 'rgba(253,224,71,0.9)', hbomb: 'rgba(254,240,138,0.95)', hyper: 'rgba(244,114,182,0.9)', mirv: 'rgba(255,120,200,0.95)', spymissile: 'rgba(196,181,253,0.8)', spymirv: 'rgba(196,181,253,0.95)' };
     const selB = state.selected !== null ? regions[state.selected].building : null;
     if (selB && selB.type === 'silo' && selB.owner === PLAYER) {
       const r = regions[selB.idx];
@@ -4513,22 +4774,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const sx = (x) => camX + x * s, sy = (y) => camY + y * s;
     const onScreen = (x, y, m = 40) => x > -m && x < W + m && y > -m && y < H + m;
 
-    // Buildings (yours always; rivals' once you zoom in a little)
-    const iconSize = clamp(s * 1.15, 13, 22);
-    for (const b of buildings) {
-      const n = nations[b.owner];
-      if (!n || (!isMe(n) && s < 9) || hiddenFrom(b)) continue;
-      const r = regions[b.idx], x = sx(r.col + 0.5), y = sy(r.row + 0.5);
-      if (!onScreen(x, y)) continue;
-      drawIcon(b.type, x, y, iconSize, !b.on ? '#5b6573' : isMe(n) ? '#e4ebf3' : n.color, isMe(n) ? (b.on ? '#818cf8' : '#ec5a50') : 'rgba(4,7,11,0.8)');
-      if (isMe(n) && b.level > 0) {
-        ctx.fillStyle = '#e2b54b';
-        if (b.level <= 4) for (let l = 0; l < b.level; l++) { ctx.beginPath(); ctx.arc(x - (b.level - 1) * 2.5 + l * 5, y + iconSize / 2 + 3, 1.8, 0, 7); ctx.fill(); }
-        else { ctx.font = `700 ${Math.max(8, iconSize * 0.5)}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(4,7,11,0.85)'; ctx.strokeText(b.level, x, y + iconSize / 2 + 4); ctx.fillText(b.level, x, y + iconSize / 2 + 4); }
-      }
-    }
-
-    // Nation names, sized to fit inside their own land
+    // Nation names, sized to fit inside their own land (under the power lines and buildings)
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const n of list) {
       const L = n.label;
@@ -4547,6 +4793,23 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       });
     }
 
+    drawGrid(now, s, sx, sy, onScreen);
+
+    // Buildings (yours always; rivals' once you zoom in a little)
+    const iconSize = clamp(s * 1.15, 13, 22);
+    for (const b of buildings) {
+      const n = nations[b.owner];
+      if (!n || (!isMe(n) && s < 9) || hiddenFrom(b)) continue;
+      const r = regions[b.idx], x = sx(r.col + 0.5), y = sy(r.row + 0.5);
+      if (!onScreen(x, y)) continue;
+      drawIcon(b.type, x, y, iconSize, !b.on ? '#5b6573' : isMe(n) ? '#e4ebf3' : n.color, isMe(n) ? (b.on ? '#818cf8' : '#ec5a50') : 'rgba(4,7,11,0.8)');
+      if (isMe(n) && b.level > 0) {
+        ctx.fillStyle = '#e2b54b';
+        if (b.level <= 4) for (let l = 0; l < b.level; l++) { ctx.beginPath(); ctx.arc(x - (b.level - 1) * 2.5 + l * 5, y + iconSize / 2 + 3, 1.8, 0, 7); ctx.fill(); }
+        else { ctx.font = `700 ${Math.max(8, iconSize * 0.5)}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(4,7,11,0.85)'; ctx.strokeText(b.level, x, y + iconSize / 2 + 4); ctx.fillText(b.level, x, y + iconSize / 2 + 4); }
+      }
+    }
+
     // Troop counts at the front of every invasion you're part of
     ctx.font = '700 12px "Chakra Petch", ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const a of attacks) {
@@ -4560,6 +4823,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       ctx.fillStyle = '#fff'; ctx.fillText(label, x, y + 0.5);
     }
 
+    drawFlowTags(s, sx, sy, onScreen);
+
     // Ships
     for (const sh of ships) {
       const x = sx(sh.x), y = sy(sh.y);
@@ -4569,7 +4834,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
       if (sh.kind === 'transport') { ctx.moveTo(10, 0); ctx.lineTo(6, -5); ctx.lineTo(-8, -5); ctx.lineTo(-8, 5); ctx.lineTo(6, 5); ctx.closePath(); }
       else { ctx.moveTo(9, 0); ctx.lineTo(-6, -5); ctx.lineTo(-3, 0); ctx.lineTo(-6, 5); ctx.closePath(); }
       const mine = sh.owner === PLAYER, oc = nations[sh.owner] ? nations[sh.owner].color : '#818cf8';
-      ctx.fillStyle = !mine ? oc : sh.kind === 'transport' ? '#e2b54b' : sh.kind === 'spy' ? '#c4b5fd' : '#ffffff'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = mine ? oc : 'rgba(4,7,11,0.8)'; ctx.stroke();
+      ctx.fillStyle = !mine ? oc : sh.kind === 'transport' ? '#e2b54b' : sh.kind === 'spy' ? '#c4b5fd' : sh.kind === 'destroyer' ? '#94a3b8' : '#ffffff'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = mine ? oc : 'rgba(4,7,11,0.8)'; ctx.stroke();
       ctx.restore();
       if (state.selShip === sh) {
         ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 13, 0, 7); ctx.stroke();
@@ -4676,10 +4941,13 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     camera.y = H / 2 - (row + 0.5) * camera.s;
     clampCamera();
   }
+  // Zooms so your whole nation fills the screen, with a margin (and never closer than a comfortable building view).
   function focusOnPlayer() {
     const p = nations[PLAYER];
     if (!p || !p.tiles) return;
-    centreOn(p.sx / p.tiles, p.sy / p.tiles, maxS * 0.8);
+    const w = p.c1 - p.c0 + 1, h = p.r1 - p.r0 + 1, pad = 6;
+    const s = Math.min(W / (w + pad * 2), (H - 160) / (h + pad * 2), maxS * 0.8);
+    centreOn((p.c0 + p.c1) / 2, (p.r0 + p.r1) / 2, s);
   }
   function toWorld(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
@@ -4766,78 +5034,40 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   }, { passive: false });
 
   /* ================= Phase 5: assistant, flag, updates, chests, badges, tutorial ================= */
-  /* ----- Background assistant: basic buildings and small upgrades only, with a gold reserve ----- */
+  /* ----- Background assistant: spends your money growing your land, and never touches your buildings ----- */
   let assistSetting = null;
   const assistSet = () => (assistSetting = assistSetting || Object.assign({ on: true }, store.get('gh.assist') || {}));
   function syncAssist() {
     const on = assistSet().on, b = $('btn-assist');
     b.classList.toggle('active', on);
-    b.title = b.ariaLabel = on ? 'Assistant on' : 'Assistant off';
+    b.title = b.ariaLabel = on ? 'Assistant on: expanding your land' : 'Assistant off';
     const c = $('set-assist'); if (c) c.checked = on;
   }
-  function setAssist(on) { assistSet().on = on; store.set('gh.assist', assistSet()); syncAssist(); toast(on ? 'Assistant on: it will place basic buildings and make small upgrades.' : 'Assistant off.', 'info'); }
-  const ASSIST_MAX_COST = 2500, ASSIST_MAX_LEVEL = 10;
-  // What the assistant builds, in order of priority, and how many it wants for a nation of this size.
-  const ASSIST_PLAN = [
-    ['factory', (p) => 1 + Math.floor(p.tiles / 50)],
-    ['farm', (p) => Math.floor(p.tiles / 25)],
-    ['city', (p) => 1 + Math.floor(p.tiles / 120)],
-    ['bank', (p) => (p.tech >= 105 ? Math.floor(p.tiles / 100) : 0)],
-    ['lab', (p) => (p.tiles > 40 ? 1 : 0)],
-    ['hospital', (p) => (p.tech >= 105 && p.tiles > 60 ? 1 : 0)],
-  ];
-  const ASSIST_VALUE = { city: 3, bank: 2.5, factory: 2, farm: 1.5, lab: 1, hospital: 0.7 };
-  // Picks a safe, useful sector: away from the front line, spread out from buildings of the same kind (so their areas
-  // don't overlap), on busy land for farms and cities, and inside a factory's power range when the building needs power.
-  function assistSpot(p, type) {
-    const B = BUILD[type];
-    const same = p.blds.filter((b) => b.type === type);
-    const power = B.free ? [] : p.blds.filter((b) => b.type === 'factory' || b.type === 'plant');
-    if (!B.free && !power.length && type !== 'factory') return null;
-    const front = p.enemyFront.length > 12 ? Array.from({ length: 12 }, () => pick(p.enemyFront)) : p.enemyFront;
-    let best = null, bestS = -Infinity;
-    for (let t = 0; t < 40; t++) {
-      const i = pick(p.tileList);
-      if (i === undefined) break;
-      const r = regions[i];
-      if (r.building || r.toxic || (B.coastal && !r.coastal)) continue;
-      if (power.length && !power.some((f) => tileDist(f.idx, i) <= (f.type === 'plant' ? PLANT_RANGE : FACTORY_RANGE)(f.level))) continue;
-      const gap = Math.min(30, ...same.map((b) => tileDist(b.idx, i)), 30);
-      const danger = front.length ? Math.min(20, ...front.map((j) => tileDist(j, i))) : 20;
-      const busy = ['farm', 'city'].includes(type) ? r.population / POP_CAP * 8 : 0;
-      const s = gap * (B.radius ? 1 : 0.2) + danger * 0.8 + busy + rnd();
-      if (s > bestS) { bestS = s; best = i; }
-    }
-    return best;
-  }
-  // Runs once a month. Keeps a gold reserve, then does up to two things: build what's missing, or upgrade whatever pays best.
+  function setAssist(on) { assistSet().on = on; store.set('gh.assist', assistSet()); syncAssist(); toast(on ? 'Assistant on: it spends your money expanding your land. It never touches your buildings.' : 'Assistant off: your money is all yours.', 'info'); }
+  const ASSIST_CLAIMS = 20;   // most sectors it claims in one month
+  // Runs once a month: claims free land on your border, as much as the money allows. Compact growth first (sectors
+  // surrounded by your land), then the ones closest to your heart. It never builds, upgrades or invades.
   function assistTurn() {
     const p = nations[PLAYER];
-    if (!assistSet().on || !state.started || state.over || !p || !p.alive || state.cfg.tutorial || needsStart()) return;
-    const hot = attacks.some((a) => a.def === PLAYER);   // keep more in the bank while someone is invading you
-    const reserve = Math.max(1500, p.income * 5) * (hot ? 2 : 1);
-    const cap = Math.max(ASSIST_MAX_COST, p.income * 8);
-    for (let step = 0; step < 2; step++) {
-      const room = p.gold - reserve;
-      if (room < 150) return;
-      const cnt = (t) => p.blds.filter((b) => b.type === t).length;
-      let did = false;
-      for (const [t, want] of ASSIST_PLAN) {
-        if (cnt(t) >= want(p) || p.tech < BUILD[t].tech) continue;
-        const cost = buildCost(p, t);
-        if (cost > room || cost > cap) continue;
-        const idx = assistSpot(p, t);
-        if (idx !== null && placeAt(t, idx)) { toast(`Assistant built a ${BUILD[t].name}.`, 'info'); did = true; break; }
+    if (!assistSet().on || !state.started || state.over || !p || !p.alive || state.cfg.tutorial || needsStart() || state.placing) return;
+    const reserve = attacks.some((a) => a.def === PLAYER) ? 300 : 0;   // a little cushion while someone is invading you
+    const cx = p.sx / Math.max(1, p.tiles), cy = p.sy / Math.max(1, p.tiles);
+    let claimed = 0;
+    while (claimed < ASSIST_CLAIMS && p.gold - claimCost(p) >= reserve) {
+      const free = p.frontier.filter((j) => !regions[j].owner && !regions[j].toxic);
+      if (!free.length) break;
+      let best = null, bestS = -Infinity;
+      for (let t = 0; t < 40; t++) {
+        const j = pick(free), r = regions[j];
+        const sc = ownNeighbours(j, PLAYER) * 3 - Math.hypot(r.col - cx, r.row - cy) * 0.15 + rnd() * 0.5;
+        if (sc > bestS) { bestS = sc; best = j; }
       }
-      if (did) continue;
-      // Small upgrades only, but let the cap grow when there is plenty of money.
-      const lvlCap = ASSIST_MAX_LEVEL + Math.floor(Math.max(0, room - 2500) / 3000);
-      const up = p.blds
-        .filter((b) => ASSIST_VALUE[b.type] && b.level < Math.min(lvlCap, maxLevel(b.type)) && upgradeCost(p, b) <= Math.min(room, cap))
-        .sort((a, b) => ASSIST_VALUE[b.type] / upgradeCost(p, b) - ASSIST_VALUE[a.type] / upgradeCost(p, a))[0];
-      if (!up) return;
-      upgradeBuilding(up); toast(`Assistant upgraded a ${BUILD[up.type].name}.`, 'info');
+      p.gold -= claimCost(p); bump(p, 'land');
+      take(p, best, 500);
+      claimed++;
+      tally();
     }
+    if (claimed) medal('first_claim');
   }
 
   /* ----- Custom flag: images are shrunk and kept in the save ----- */
@@ -5002,7 +5232,8 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   const TUT = [
     { t: 'Found your nation', x: 'Tap any land on the map, then press Found nation here. Your rivals appear around the world.', done: () => state.started },
     { t: 'Grow your land', x: 'Tap your land and hold Expand until you own 12 sectors. Each sector costs a little more than the last.', done: () => nations[PLAYER].tiles >= 12 },
-    { t: 'Build a factory', x: 'Press Build, pick Factory, then tap your land. Factories earn money and power the buildings around them.', done: () => nations[PLAYER].blds.some((b) => b.type === 'factory') },
+    { t: 'Build a power plant', x: 'Press Build, pick Power Plant, then tap your land. Nothing works without power: the plant runs power lines to everything inside its circle.', done: () => nations[PLAYER].blds.some((b) => b.type === 'plant') },
+    { t: 'Build a factory', x: 'Now build a Factory inside the power plant\'s circle. Watch the power line connect it. Factories earn money and ship supplies down the lines.', done: () => nations[PLAYER].blds.some((b) => b.type === 'factory' && b.on) },
     { t: 'Build a farm', x: 'Build a Farm too. Farms make the people around them grow, and more people means a stronger army.', done: () => nations[PLAYER].blds.some((b) => b.type === 'farm') },
     { t: 'Claim more land', x: 'Tap free land on your border and hold Claim, until you own 20 sectors.', done: () => nations[PLAYER].tiles >= 20 },
     { t: 'Defend', x: 'A rival is landing troops on your land! Your people defend by themselves: each sector costs the attacker as many troops as it has people. Watch the number count down.', done: () => tut.hit && !attacks.some((a) => a.def === PLAYER) },
@@ -5037,7 +5268,7 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
     const s = TUT[tut.step];
     if (!s) return;
     // Scripted invasion: once you hold 20 sectors, the nearest rival lands a small army on your land.
-    if (tut.step === 5 && !tut.hit) {
+    if (s.t === 'Defend' && !tut.hit) {
       const foes = Object.values(nations).filter((n) => !n.isPlayer && n.alive && n.tileList.length);
       const p = nations[PLAYER];
       if (foes.length && p.tileList.length) {
@@ -5086,7 +5317,6 @@ body.on-title #topbar, body.on-title .dock, body.on-title #hint, body.on-title #
   $('sheet-close').addEventListener('click', closeSheet);
   $('btn-overview').addEventListener('click', openSheet);
   $('btn-pause').addEventListener('click', pauseGame);
-  $('btn-out').addEventListener('click', zoomAllOut);
   $('btn-home').addEventListener('click', () => { if (!needsStart()) focusOnPlayer(); else toast('Found your nation first.', 'gold'); });
   $('btn-build').addEventListener('click', openBuildMenu);
   $('build-close').addEventListener('click', closeBuildMenu);

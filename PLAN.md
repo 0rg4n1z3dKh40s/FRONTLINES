@@ -74,5 +74,15 @@ Fixed along the way: the Phase 4 spy intel text had a quote bug that broke the w
 - **Not tried by hand:** update button on GitHub Pages, chest animation, fog-of-war visuals.
 - **Spy agency quest:** added as "Shadow War" (find 6 hidden buildings); untested by play.
 
+## Power grid, assistant and military update (built, not play-tested)
+- **Power plants are the only power source.** Factories now need power too and earn nothing without it. Every nation starts with a free power plant and factory (not in the tutorial, which now has a "Build a power plant" step). Plant reach is `PLANT_RANGE` (10 sectors at level 0, grows with upgrades), shown as a faint yellow circle. Saves before v5 get a plant added for any nation that has buildings but none.
+- **Visible power lines.** `buildGrid` wires each powered building to its nearest own plant as a short tree (`b.parent`), drawn as yellow lines with power dots running outward.
+- **Factory supplies.** Once a month (`shipSupplies`) each powered factory splits its income between the supply-using buildings on its grid: red troops to forts, barracks, army bases, command centers and bunkers (become people there), orange munitions to silos and other military (silos turn every $600 into a free missile), purple to spy buildings, gold money to cities, banks, labs, hospitals and depots (display only, it is already income). Coloured dots travel the lines; "$x given" and "+$x" labels show when zoomed in (`s >= 7`). Supply depots on the grid raise it by `DEPOT_BOOST`.
+- **Assistant** now only claims free border land with your money (up to `ASSIST_CLAIMS` a month) and never builds, upgrades or touches your buildings. Same robot button.
+- **Camera:** World button removed; Home zooms to fit your nation.
+- **Military:** new SAM Site, Naval Base (docks ships, builds destroyers), Supply Depot, Army Base and Command Center (army strength, capped at `ARMY_CAP`). Forts now make invaders pay more troops (`sectorCost`). Renamed Radar Station, Air Force Base, Fallout Bunker.
+- **Bombs:** cruise missile, bunker buster (ignores bunkers), EMP bomb (destroys buildings, barely kills), thermobaric bomb, ICBM, hydrogen bomb, hypersonic missile (3x speed, half as easy to shoot down). AIs use them too.
+- **Blasts stay visible zoomed out:** every explosion is drawn at least `BOOM_MIN_PX` across on screen.
+
 ## Not planned yet
 - **Multiplayer.** Needs a server or realtime backend and is a separate project.
